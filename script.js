@@ -196,6 +196,18 @@
     var statusEl = contactForm.querySelector("[data-form-status]");
     var submitBtn = contactForm.querySelector(".form__submit");
 
+    // Désactive le bouton tant que tous les champs obligatoires ne sont pas remplis
+    function checkFormValidity() {
+      var allFilled = Array.prototype.every.call(
+        contactForm.querySelectorAll("[required]"),
+        function (field) { return field.value.trim() !== ""; }
+      );
+      if (submitBtn) submitBtn.disabled = !allFilled;
+    }
+    checkFormValidity();
+    contactForm.addEventListener("input", checkFormValidity);
+    contactForm.addEventListener("change", checkFormValidity);
+
     contactForm.addEventListener("submit", function (e) {
       e.preventDefault();
 
