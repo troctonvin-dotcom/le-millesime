@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservation &amp; Contact — Le Millésime</title>
+<meta name="description" content="Réservez une table ou contactez Le Millésime, cave et bar à vin à Sens, pour organiser un événement privé.">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Réservation & Contact — Le Millésime">
+<meta property="og:description" content="Réservez une table ou contactez Le Millésime, cave et bar à vin à Sens.">
+<meta property="og:image" content="assets/img/hero.jpg">
+<meta property="og:locale" content="fr_FR">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="site-header__inner">
+    <a href="index.html" class="brand">
+      <img src="assets/logo.png" alt="Le Millésime" width="112" height="75" class="brand__logo">
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="siteNav">
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="visually-hidden">Ouvrir le menu</span>
+    </button>
+
+    <nav class="site-nav" id="siteNav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="index.html#histoire">Histoire</a></li>
+        <li><a href="index.html#propose">Ce qu'on propose</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="index.html#avis">Avis</a></li>
+        <li><a href="index.html#evenements">Événements</a></li>
+        <li><a href="index.html#infos-pratiques">Infos pratiques</a></li>
+      </ul>
+      <a href="#reserver" class="btn btn--gold nav-cta">Réserver une table</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenu">
+
+  <!-- EN-TÊTE DE PAGE -->
+  <section class="section contact-hero">
+    <div class="section__inner">
+      <p class="eyebrow-quiet">Le Millésime · Sens</p>
+      <h1 class="title-left contact-hero__title">Réservation &amp; Contact</h1>
+      <p class="contact-hero__lead">Une table à réserver, un événement à organiser, une question ? Écrivez-nous, on vous répond rapidement.</p>
+    </div>
+  </section>
+
+  <!-- FORMULAIRE + INFOS -->
+  <section id="reserver" class="section contact">
+    <div class="section__inner contact__grid">
+
+      <form
+        name="contact"
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        class="form"
+        id="contactForm"
+      >
+        <input type="hidden" name="form-name" value="contact">
+        <p class="form__honeypot" aria-hidden="true">
+          <label>Ne pas remplir si vous êtes humain : <input name="bot-field" tabindex="-1" autocomplete="off"></label>
+        </p>
+
+        <div class="form__row form__row--split">
+          <div>
+            <label for="name">Nom complet</label>
+            <input type="text" id="name" name="name" autocomplete="name" required>
+          </div>
+          <div>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
+          </div>
+        </div>
+
+        <div class="form__row form__row--split">
+          <div>
+            <label for="phone">Téléphone</label>
+            <input type="tel" id="phone" name="phone" autocomplete="tel">
+          </div>
+          <div>
+            <label for="subject">Objet de la demande</label>
+            <select id="subject" name="subject" required>
+              <option value="">Choisir…</option>
+              <option value="Réservation table">Réservation de table</option>
+              <option value="Privatisation / événement">Privatisation / événement</option>
+              <option value="Question générale">Question générale</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form__row form__row--split">
+          <div>
+            <label for="date">Date souhaitée</label>
+            <input type="date" id="date" name="date">
+          </div>
+          <div>
+            <label for="guests">Nombre de personnes</label>
+            <input type="number" id="guests" name="guests" min="1" step="1">
+          </div>
+        </div>
+
+        <div class="form__row">
+          <label for="message">Votre message</label>
+          <textarea id="message" name="message" rows="5" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--gold form__submit">Envoyer la demande</button>
+
+        <p class="form__status" data-form-status role="status" aria-live="polite" hidden></p>
+      </form>
+
+      <div class="contact__info" data-reveal>
+        <h2 class="title-left">Nous trouver</h2>
+        <dl class="infos__list">
+          <div>
+            <dt>Adresse</dt>
+            <dd>8 Avenue Georges Pompidou<br>89100 Sens</dd>
+          </div>
+          <div>
+            <dt>Horaires</dt>
+            <dd>Ouvert tous les jours de 10h à 19h<br>Jusqu'à 1h du matin du jeudi au samedi soir</dd>
+          </div>
+          <div>
+            <dt>Téléphone</dt>
+            <!-- Placeholder éditable : remplacer par le numéro définitif -->
+            <dd><span class="infos__note">à venir — contactez-nous sur Instagram en attendant</span></dd>
+          </div>
+          <div>
+            <dt>Instagram</dt>
+            <dd><a href="https://www.instagram.com/le_millesime_sens/" target="_blank" rel="noopener">@le_millesime_sens</a></dd>
+          </div>
+        </dl>
+        <a href="index.html#infos-pratiques" class="contact__map-link">Voir la carte sur la page d'accueil →</a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <a href="index.html" class="brand brand--footer">
+      <img src="assets/logo.png" alt="Le Millésime" width="54" height="36" class="brand__logo">
+      <span class="brand__name">Le Millésime</span>
+    </a>
+    <nav aria-label="Liens du pied de page">
+      <ul class="footer-nav">
+        <li><a href="index.html#histoire">Histoire</a></li>
+        <li><a href="index.html#propose">Ce qu'on propose</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="index.html#avis">Avis</a></li>
+        <li><a href="index.html#evenements">Événements</a></li>
+        <li><a href="index.html#infos-pratiques">Infos pratiques</a></li>
+        <li><a href="contact.html">Réservation &amp; Contact</a></li>
+      </ul>
+    </nav>
+    <a href="https://www.instagram.com/le_millesime_sens/" class="footer-instagram" target="_blank" rel="noopener">@le_millesime_sens</a>
+  </div>
+  <p class="site-footer__legal">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
