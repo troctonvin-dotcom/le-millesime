@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Le Millésime">
+  <rect width="64" height="64" fill="#0a2140"/>
+  <rect x="6" y="6" width="52" height="52" fill="none" stroke="#d9b47f" stroke-width="1.5"/>
+  <text x="32" y="43" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="34" fill="#f4f0e6">M</text>
+</svg>
