@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tentez votre chance — Le Millésime, cave &amp; bar à vin à Sens</title>
+<meta name="description" content="Inscrivez-vous à la newsletter du Millésime et tournez la roue : 2 verres de vin ou 10 % de réduction à gagner. Jeu gratuit, réservé aux plus de 18 ans.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://le-millesime.fr/roue.html">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Le Millésime">
+<meta property="og:title" content="Tournez la roue du Millésime">
+<meta property="og:description" content="Inscrivez-vous et tentez de gagner 2 verres de vin ou 10 % de réduction.">
+<meta property="og:image" content="https://le-millesime.fr/assets/img/gallery-terrasse.jpg">
+<meta property="og:locale" content="fr_FR">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .jeu { background: var(--marine-dark); color: var(--creme); padding-top: calc(var(--header-height) + var(--sp-7)); }
+  .jeu__grid { display: grid; grid-template-columns: 1fr; grid-template-areas: "intro" "roue" "carte"; gap: var(--sp-6); align-items: start; }
+  .zone-intro { grid-area: intro; } .zone-roue { grid-area: roue; } .zone-carte { grid-area: carte; }
+  @media (min-width: 900px) {
+    .jeu__grid { grid-template-columns: 1.05fr 1fr; grid-template-areas: "intro roue" "carte roue"; column-gap: var(--sp-7); }
+    .zone-roue { align-self: center; }
+  }
+  .jeu h1 { font-size: var(--fs-h2); color: var(--creme); }
+  .jeu__lead { font-size: var(--fs-lead); color: rgba(244, 240, 230, 0.85); max-width: 34ch; }
+  .lots { list-style: none; padding: 0; margin: var(--sp-5) 0 0; display: grid; gap: var(--sp-3); }
+  .lots li { display: flex; align-items: center; gap: var(--sp-3); font-size: 1.05rem; }
+  .lots .pastille { width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto; border: 1px solid rgba(244,240,230,.4); }
+
+  /* Wheel */
+  .roue { position: relative; width: min(100%, 460px); aspect-ratio: 1; margin: 0 auto; }
+  .roue__disque { width: 100%; height: 100%; transition: transform 5.2s cubic-bezier(0.12, 0.8, 0.12, 1); will-change: transform; }
+  .roue__disque svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 24px 40px rgba(0,0,0,.45)); }
+  .roue__pointeur { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 44px; height: 56px; z-index: 2; filter: drop-shadow(0 4px 6px rgba(0,0,0,.4)); }
+  .roue__centre { position: absolute; inset: 0; margin: auto; width: 26%; height: 26%; border-radius: 50%; background: var(--marine-dark); border: 3px solid var(--or-clair); display: flex; align-items: center; justify-content: center; z-index: 1; }
+  .roue__centre img { width: 78%; height: auto; }
+
+  /* Form + result card */
+  .carte { background: var(--creme); color: var(--marine-dark); padding: var(--sp-6); border-top: 4px solid var(--or); max-width: 520px; }
+  .carte h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-4); }
+  .carte .form { max-width: none; gap: var(--sp-4); }
+  .consent { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: .95rem; color: var(--marine); }
+  .consent input { width: 20px !important; height: 20px; margin-top: 3px; flex: 0 0 auto; accent-color: var(--or); }
+  .petit { font-size: .85rem; color: var(--marine); opacity: .85; margin-top: var(--sp-3); }
+  .btn[disabled] { opacity: .5; cursor: not-allowed; transform: none; }
+  .resultat { text-align: center; }
+  .resultat__gain { font-family: var(--font-serif); font-size: clamp(2rem, 1.5rem + 2vw, 2.8rem); font-weight: 600; color: var(--marine-dark); margin: var(--sp-2) 0 var(--sp-4); }
+  .code { display: inline-block; font-family: var(--font-sans); font-weight: 600; letter-spacing: .18em; font-size: 1.4rem; padding: .6rem 1.2rem; border: 2px dashed var(--or); margin: var(--sp-2) 0 var(--sp-4); }
+  .reglement { background: var(--creme); }
+  .reglement .section__inner { max-width: 820px; }
+  .reglement h2 { font-size: var(--fs-h3); }
+  .reglement ol { padding-left: 1.2rem; color: var(--marine); }
+  .reglement li { margin-bottom: .6rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="site-header__inner">
+    <a href="index.html" class="brand">
+      <img src="assets/logo.png" alt="Le Millésime" width="112" height="75" class="brand__logo">
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="siteNav">
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="visually-hidden">Ouvrir le menu</span>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="index.html#histoire">Histoire</a></li>
+        <li><a href="index.html#propose">Ce qu'on propose</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="index.html#evenements">Événements</a></li>
+        <li><a href="index.html#infos-pratiques">Infos pratiques</a></li>
+      </ul>
+      <a href="contact.html" class="btn btn--gold nav-cta">Réserver une table</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenu">
+  <section class="section jeu">
+    <div class="section__inner jeu__grid">
+
+      <div class="zone-intro">
+        <p class="eyebrow-quiet">Le Millésime · Jeu</p>
+        <h1 class="title-left">Tournez la roue</h1>
+        <p class="jeu__lead">Inscrivez-vous à la newsletter du Millésime et tentez votre chance. Une participation par personne.</p>
+        <ul class="lots" aria-label="Les lots">
+          <li><span class="pastille" style="background:#7A2335"></span>2 verres de vin offerts</li>
+          <li><span class="pastille" style="background:#B3854A"></span>10 % de réduction sur votre addition</li>
+          <li><span class="pastille" style="background:#123259"></span>Pas cette fois… mais à bientôt au Millésime</li>
+        </ul>
+      </div>
+
+      <div class="zone-carte">
+        <!-- Étape 1 : inscription -->
+        <div class="carte" id="etapeForm">
+          <h2>Inscrivez-vous pour jouer</h2>
+          <form class="form" id="jeuForm" novalidate>
+            <p class="form__honeypot" aria-hidden="true"><label>Ne pas remplir : <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+            <div class="form__row">
+              <label for="prenom">Prénom</label>
+              <input type="text" id="prenom" name="prenom" autocomplete="given-name" required>
+            </div>
+            <div class="form__row">
+              <label for="email">E-mail</label>
+              <input type="email" id="email" name="email" autocomplete="email" required>
+            </div>
+            <label class="consent"><input type="checkbox" id="majeur" required> <span>J'ai 18 ans ou plus.</span></label>
+            <label class="consent"><input type="checkbox" id="optin" required> <span>J'accepte de recevoir la newsletter du Millésime (une par mois environ). Désinscription possible à tout moment.</span></label>
+            <button type="submit" class="btn btn--gold form__submit" id="btnJouer" disabled>Tourner la roue</button>
+            <p class="form__status" id="jeuStatus" role="status" aria-live="polite" hidden></p>
+          </form>
+          <p class="petit">Jeu gratuit sans obligation d'achat. <a href="#reglement">Voir le règlement</a>.</p>
+        </div>
+
+        <!-- Étape 2 : résultat -->
+        <div class="carte resultat" id="etapeResultat" hidden aria-live="polite">
+          <p class="eyebrow-quiet" style="color:var(--or-deep)" id="resTitre">Résultat</p>
+          <p class="resultat__gain" id="resGain"></p>
+          <div id="resCodeBloc">
+            <p>Votre code, à montrer au comptoir :</p>
+            <p class="code" id="resCode"></p>
+            <p class="petit" id="resConditions"></p>
+          </div>
+          <p class="petit" id="resMerci">Merci pour votre inscription. Faites une capture d'écran de cette page.</p>
+          <a href="contact.html" class="btn btn--gold" style="margin-top:1rem;">Réserver une table</a>
+        </div>
+      </div>
+
+      <div class="zone-roue">
+        <div class="roue">
+          <svg class="roue__pointeur" viewBox="0 0 44 56" aria-hidden="true"><path d="M22 54 L4 12 A20 20 0 0 1 40 12 Z" fill="#D9B47F" stroke="#0a2140" stroke-width="2"/><circle cx="22" cy="17" r="6" fill="#0a2140"/></svg>
+          <div class="roue__disque" id="disque">
+            <svg viewBox="-200 -200 400 400" role="img" aria-label="Roue du Millésime : 10 cases, 1 case 2 verres de vin, 3 cases 10 %, 6 cases perdu" id="roueSvg"></svg>
+          </div>
+          <div class="roue__centre"><img src="assets/logo.png" alt=""></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section reglement" id="reglement">
+    <div class="section__inner">
+      <h2 class="title-left">Règlement du jeu</h2>
+      <ol>
+        <li><b>Organisateur :</b> Le Millésime, cave et bar à vin, 8 Avenue Georges Pompidou, 89100 Sens.</li>
+        <li><b>Participation :</b> jeu gratuit et sans obligation d'achat, réservé aux personnes majeures (18 ans et plus). Une seule participation par personne et par adresse e-mail. Toute participation en double est annulée.</li>
+        <li><b>Fonctionnement :</b> après inscription à la newsletter, le participant tourne une roue de 10 cases. Le résultat est tiré au hasard : 1 chance sur 10 de gagner 2 verres de vin, 3 chances sur 10 de gagner 10 % de réduction, 6 chances sur 10 de ne rien gagner.</li>
+        <li><b>Lots :</b> « 2 verres de vin » : deux verres du vin du moment, à consommer sur place. « 10 % » : réduction de 10 % sur une addition au bar ou un achat en cave. Lots non échangeables, non remboursables, non cumulables avec une autre offre.</li>
+        <li><b>Utilisation :</b> présenter le code affiché au comptoir, avec la même adresse e-mail, dans les 30 jours suivant le jeu, pendant les horaires d'ouverture. Le Millésime peut refuser de servir de l'alcool à une personne en état d'ivresse ou ne pouvant justifier de sa majorité.</li>
+        <li><b>Données personnelles :</b> le prénom et l'e-mail servent uniquement à l'envoi de la newsletter du Millésime et à la vérification des gains. Ils ne sont ni vendus ni cédés. Désinscription à tout moment par le lien présent dans chaque e-mail, ou en écrivant à contact.nrdiffusion@gmail.com.</li>
+        <li><b>Modification :</b> Le Millésime peut modifier ou arrêter le jeu à tout moment.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <a href="index.html" class="brand brand--footer">
+      <img src="assets/logo.png" alt="Le Millésime" width="54" height="36" class="brand__logo">
+      <span class="brand__name">Le Millésime</span>
+    </a>
+    <nav aria-label="Liens du pied de page">
+      <ul class="footer-nav">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="contact.html">Réservation &amp; Contact</a></li>
+        <li><a href="#reglement">Règlement du jeu</a></li>
+      </ul>
+    </nav>
+    <a href="https://www.instagram.com/le_millesime_sens/" class="footer-instagram" target="_blank" rel="noopener">@le_millesime_sens</a>
+  </div>
+  <p class="site-footer__legal">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ---- Configuration du jeu ----
+  var ENDPOINT = "https://formsubmit.co/ajax/contact.nrdiffusion@gmail.com";
+  var STORAGE_KEY = "millesime-roue-v1";
+  // 10 cases : V = 2 verres (1), R = 10 % (3), P = perdu (6). Les chances suivent exactement les cases.
+  var CASES = ["V", "P", "R", "P", "P", "R", "P", "P", "R", "P"];
+  var LOTS = {
+    V: { label: "2 verres", long: "2 verres de vin offerts", couleur: "#7A2335", texte: "#F4F0E6", prefix: "VIN" },
+    R: { label: "-10 %", long: "10 % de réduction", couleur: "#B3854A", texte: "#0A2140", prefix: "DIX" },
+    P: { label: "Perdu", long: "Pas cette fois…", couleur: "#123259", texte: "#D9B47F", prefix: null }
+  };
+
+  // ---- Dessin de la roue ----
+  var svg = document.getElementById("roueSvg");
+  var NS = "http://www.w3.org/2000/svg";
+  var n = CASES.length, R = 190, angle = 360 / n;
+  function pt(deg, r) { var a = (deg - 90) * Math.PI / 180; return [r * Math.cos(a), r * Math.sin(a)]; }
+  var bord = document.createElementNS(NS, "circle");
+  bord.setAttribute("r", 198); bord.setAttribute("fill", "#D9B47F"); svg.appendChild(bord);
+  CASES.forEach(function (k, i) {
+    var a0 = i * angle, a1 = a0 + angle, p0 = pt(a0, R), p1 = pt(a1, R);
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", "M0 0 L" + p0[0] + " " + p0[1] + " A" + R + " " + R + " 0 0 1 " + p1[0] + " " + p1[1] + " Z");
+    path.setAttribute("fill", LOTS[k].couleur);
+    path.setAttribute("stroke", "#D9B47F"); path.setAttribute("stroke-width", "2");
+    svg.appendChild(path);
+    var mid = a0 + angle / 2, tp = pt(mid, R * 0.64);
+    var t = document.createElementNS(NS, "text");
+    t.setAttribute("x", tp[0]); t.setAttribute("y", tp[1]);
+    t.setAttribute("fill", LOTS[k].texte);
+    t.setAttribute("font-family", "Fraunces, Georgia, serif");
+    t.setAttribute("font-size", k === "P" ? "17" : "21");
+    t.setAttribute("font-weight", "600");
+    t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "middle");
+    t.setAttribute("transform", "rotate(" + (mid - 90) + " " + tp[0] + " " + tp[1] + ")");
+    t.textContent = LOTS[k].label;
+    svg.appendChild(t);
+  });
+
+  // ---- Tirage (hasard cryptographique, une case au hasard parmi les 10) ----
+  function hasard(max) {
+    var a = new Uint32Array(1);
+    if (window.crypto && window.crypto.getRandomValues) { window.crypto.getRandomValues(a); return a[0] % max; }
+    return Math.floor(Math.random() * max);
+  }
+  function codeGain(prefix) {
+    var c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s = "";
+    for (var i = 0; i < 5; i++) s += c[hasard(c.length)];
+    return "MIL-" + prefix + "-" + s;
+  }
+
+  // ---- Formulaire ----
+  var form = document.getElementById("jeuForm");
+  var btn = document.getElementById("btnJouer");
+  var status = document.getElementById("jeuStatus");
+  var etapeForm = document.getElementById("etapeForm");
+  var etapeRes = document.getElementById("etapeResultat");
+  var disque = document.getElementById("disque");
+
+  function valide() {
+    var email = form.email.value.trim();
+    return form.prenom.value.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+      document.getElementById("majeur").checked && document.getElementById("optin").checked;
+  }
+  form.addEventListener("input", function () { btn.disabled = !valide(); });
+  form.addEventListener("change", function () { btn.disabled = !valide(); });
+
+  function lireDejaJoue() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (e) { return null; } }
+  function ecrireJoue(v) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch (e) {} }
+
+  function afficherResultat(r) {
+    var lot = LOTS[r.cas];
+    etapeForm.hidden = true;
+    etapeRes.hidden = false;
+    document.getElementById("resTitre").textContent = lot.prefix ? "Félicitations " + r.prenom + " !" : "Merci " + r.prenom + " !";
+    document.getElementById("resGain").textContent = lot.prefix ? "Vous gagnez " + lot.long : lot.long;
+    var bloc = document.getElementById("resCodeBloc");
+    if (lot.prefix) {
+      bloc.hidden = false;
+      document.getElementById("resCode").textContent = r.code;
+      document.getElementById("resConditions").textContent =
+        "Valable 30 jours, jusqu'au " + r.validite + ", sur place, une fois. " +
+        (r.cas === "V" ? "Réservé aux plus de 18 ans. À consommer avec modération." : "Sur une addition au bar ou un achat en cave.");
+    } else {
+      bloc.hidden = true;
+      document.getElementById("resMerci").textContent = "Vous êtes bien inscrit à la newsletter : on vous réserve d'autres surprises.";
+    }
+  }
+
+  // Déjà joué sur cet appareil : on réaffiche le résultat
+  var deja = lireDejaJoue();
+  if (deja && deja.cas) {
+    var idx = CASES.indexOf(deja.cas);
+    disque.style.transition = "none";
+    disque.style.transform = "rotate(" + (360 - (idx * angle + angle / 2)) + "deg)";
+    afficherResultat(deja);
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!valide() || form["bot-field"].value !== "") return;
+    if (lireDejaJoue()) return;
+    btn.disabled = true;
+    btn.textContent = "La roue tourne…";
+
+    var i = hasard(n), cas = CASES[i], lot = LOTS[cas];
+    var fin = new Date(); fin.setDate(fin.getDate() + 30);
+    var r = {
+      prenom: form.prenom.value.trim(),
+      email: form.email.value.trim(),
+      cas: cas,
+      code: lot.prefix ? codeGain(lot.prefix) : "",
+      validite: fin.toLocaleDateString("fr-FR"),
+      date: new Date().toLocaleString("fr-FR")
+    };
+    ecrireJoue(r);
+
+    // Rotation : 6 tours complets puis arrêt au centre de la case tirée, sous le pointeur
+    var jitter = (hasard(60) - 30) / 100 * angle * 0.6;
+    var cible = 360 * 6 + (360 - (i * angle + angle / 2)) + jitter;
+    disque.style.transform = "rotate(" + cible + "deg)";
+    var roueEl = document.querySelector(".roue");
+    if (roueEl.getBoundingClientRect().top < 0 || roueEl.getBoundingClientRect().bottom > window.innerHeight) {
+      roueEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // Envoi au Millésime (inscription + gain), sans bloquer le jeu
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({
+        "Prénom": r.prenom, "Email": r.email, "Newsletter": "Oui (accord donné)", "Majeur": "Oui",
+        "Résultat": lot.long, "Code": r.code || "—", "Valable jusqu'au": lot.prefix ? r.validite : "—", "Date": r.date,
+        _subject: "Le Millésime — Roue : " + (lot.prefix ? lot.long + " (" + r.code + ")" : "inscription") + " — " + r.prenom,
+        _replyto: r.email, _template: "table", _captcha: "false"
+      })
+    }).catch(function () {});
+
+    setTimeout(function () {
+      afficherResultat(r);
+      if (window.innerWidth < 900) etapeRes.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 5400);
+  });
+})();
+</script>
+</body>
+</html>
