@@ -190,7 +190,8 @@
 
   document.querySelectorAll("[data-carousel]").forEach(initCarousel);
 
-  // Formulaire de réservation / contact (Netlify Forms, envoi en AJAX)
+  // Formulaire de réservation / devis : envoi par e-mail via FormSubmit
+  var FORM_ENDPOINT = "https://formsubmit.co/ajax/contact.nrdiffusion@gmail.com";
   var contactForm = document.getElementById("contactForm");
   if (contactForm) {
     var statusEl = contactForm.querySelector("[data-form-status]");
@@ -208,12 +209,38 @@
     contactForm.addEventListener("input", checkFormValidity);
     contactForm.addEventListener("change", checkFormValidity);
 
+    function showStatus(text, state) {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.setAttribute("data-state", state);
+      statusEl.hidden = false;
+    }
+
     contactForm.addEventListener("submit", function (e) {
       e.preventDefault();
 
-      var formData = new FormData(contactForm);
-      var body = new URLSearchParams();
-      formData.forEach(function (value, key) { body.append(key, value); });
+      var get = function (name) {
+        var el = contactForm.querySelector('[name="' + name + '"]');
+        return el ? el.value.trim() : "";
+      };
+
+      // Anti-spam : le champ caché doit rester vide
+      if (get("bot-field") !== "") return;
+
+      var subject = get("subject") || "Demande";
+      var payload = {
+        "Nom": get("name"),
+        "Email": get("email"),
+        "Téléphone": get("phone"),
+        "Objet": subject,
+        "Date souhaitée": get("date"),
+        "Nombre de personnes": get("guests"),
+        "Message": get("message"),
+        _subject: "Le Millésime — " + subject + " — " + get("name"),
+        _replyto: get("email"),
+        _template: "table",
+        _captcha: "false"
+      };
 
       if (submitBtn) submitBtn.disabled = true;
       if (statusEl) {
@@ -221,27 +248,23 @@
         statusEl.removeAttribute("data-state");
       }
 
-      fetch("/", {
+      fetch(FORM_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString()
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
       })
         .then(function (response) {
           if (!response.ok) throw new Error("network");
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data || String(data.success) !== "true") throw new Error("refused");
           contactForm.reset();
           contactForm.hidden = true;
-          if (statusEl) {
-            statusEl.textContent = "Merci, votre demande a bien été envoyée — on vous répond très vite.";
-            statusEl.setAttribute("data-state", "success");
-            statusEl.hidden = false;
-          }
+          showStatus("Merci, votre demande a bien été envoyée — on vous répond très vite.", "success");
         })
         .catch(function () {
-          if (statusEl) {
-            statusEl.textContent = "L'envoi a échoué. Réessayez, ou écrivez-nous directement sur Instagram.";
-            statusEl.setAttribute("data-state", "error");
-            statusEl.hidden = false;
-          }
+          showStatus("L'envoi a échoué. Réessayez, appelez-nous au 06 70 10 94 54 ou écrivez-nous sur Instagram.", "error");
           if (submitBtn) submitBtn.disabled = false;
         });
     });

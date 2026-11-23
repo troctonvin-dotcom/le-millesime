@@ -887,7 +887,8 @@ button:focus-visible {
 }
 
 /* ---- Événements (editorial bleed, mirrored) ---- */
-.evenements { background: var(--creme); }
+.evenements { background: var(--creme); padding-bottom: clamp(2rem, 2rem + 2vw, 3.5rem); }
+.negoce { padding-top: clamp(2rem, 2rem + 2vw, 3.5rem); }
 
 .evenements__grid {
   display: grid;
