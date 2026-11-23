@@ -270,9 +270,54 @@
     });
   }
 
+  // Fenêtre « Tournez la roue » à l'arrivée sur le site
+  // (une fois par visite, jamais si la personne a déjà joué, jamais sur la page du jeu elle-même)
+  var roueOuverte = false;
+  (function () {
+    var surPageJeu = /roue\.html$/.test(window.location.pathname);
+    var dejaJoue = false, dejaFerme = false;
+    try {
+      dejaJoue = !!window.localStorage.getItem("millesime-roue-v1");
+      dejaFerme = window.sessionStorage.getItem("millesime-roue-fermee") === "1";
+    } catch (err) {}
+    if (surPageJeu || dejaJoue || dejaFerme) return;
+
+    roueOuverte = true;
+    var modal = document.createElement("div");
+    modal.className = "roue-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "Tournez la roue du Millésime");
+    modal.innerHTML =
+      '<div class="roue-modal__fond" data-roue-fermer></div>' +
+      '<div class="roue-modal__boite">' +
+      '<button type="button" class="roue-modal__fermer" data-roue-fermer aria-label="Fermer">×</button>' +
+      '<iframe class="roue-modal__frame" src="roue.html?embed=1" title="Tournez la roue du Millésime" loading="eager"></iframe>' +
+      '</div>';
+
+    var fermer = function () {
+      modal.classList.remove("is-visible");
+      document.documentElement.classList.remove("roue-modal-ouverte");
+      try { window.sessionStorage.setItem("millesime-roue-fermee", "1"); } catch (err) {}
+      window.setTimeout(function () { modal.remove(); }, 400);
+      document.removeEventListener("keydown", surTouche);
+    };
+    var surTouche = function (e) { if (e.key === "Escape") fermer(); };
+
+    window.setTimeout(function () {
+      document.body.appendChild(modal);
+      document.documentElement.classList.add("roue-modal-ouverte");
+      window.requestAnimationFrame(function () { modal.classList.add("is-visible"); });
+      modal.querySelectorAll("[data-roue-fermer]").forEach(function (el) { el.addEventListener("click", fermer); });
+      document.addEventListener("keydown", surTouche);
+      var btnFermer = modal.querySelector(".roue-modal__fermer");
+      if (btnFermer) btnFermer.focus();
+    }, 1200);
+  })();
+
   // Popup de réservation (une fois par session)
   var popup = document.getElementById("reservePopup");
-  if (popup) {
+  if (popup && !roueOuverte) {
     var STORAGE_KEY = "millesime-reserve-popup-seen";
     var alreadySeen = false;
     try { alreadySeen = window.sessionStorage.getItem(STORAGE_KEY) === "1"; } catch (err) {}
