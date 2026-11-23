@@ -271,16 +271,17 @@
   }
 
   // Fenêtre « Tournez la roue » à l'arrivée sur le site
-  // (une fois par visite, jamais si la personne a déjà joué, jamais sur la page du jeu elle-même)
+  // (page d'accueil uniquement, une fois par visite, jamais si la personne a déjà joué)
   var roueOuverte = false;
   (function () {
-    var surPageJeu = /roue\.html$/.test(window.location.pathname);
+    var chemin = window.location.pathname;
+    var surAccueil = chemin === "/" || /\/index\.html$/.test(chemin);
     var dejaJoue = false, dejaFerme = false;
     try {
       dejaJoue = !!window.localStorage.getItem("millesime-roue-v1");
       dejaFerme = window.sessionStorage.getItem("millesime-roue-fermee") === "1";
     } catch (err) {}
-    if (surPageJeu || dejaJoue || dejaFerme) return;
+    if (!surAccueil || dejaJoue || dejaFerme) return;
 
     roueOuverte = true;
     var modal = document.createElement("div");
@@ -304,15 +305,20 @@
     };
     var surTouche = function (e) { if (e.key === "Escape") fermer(); };
 
+    // La fenêtre est ajoutée tout de suite (invisible) pour que la roue se charge en avance,
+    // puis affichée 1 seconde après l'arrivée sur la page.
+    modal.style.visibility = "hidden";
+    document.body.appendChild(modal);
+    var attente = Math.max(0, 1000 - (window.performance ? window.performance.now() : 0));
     window.setTimeout(function () {
-      document.body.appendChild(modal);
+      modal.style.visibility = "";
       document.documentElement.classList.add("roue-modal-ouverte");
       window.requestAnimationFrame(function () { modal.classList.add("is-visible"); });
       modal.querySelectorAll("[data-roue-fermer]").forEach(function (el) { el.addEventListener("click", fermer); });
       document.addEventListener("keydown", surTouche);
       var btnFermer = modal.querySelector(".roue-modal__fermer");
       if (btnFermer) btnFermer.focus();
-    }, 1200);
+    }, attente);
   })();
 
   // Popup de réservation (une fois par session)
