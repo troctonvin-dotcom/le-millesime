@@ -71,6 +71,8 @@
     $("userEmail").textContent = s.user.email;
     $("infoCompte").textContent = "Connecté avec " + s.user.email + ".";
     await chargerTout();
+    var jeton = /^#pointer=([0-9a-f-]{36})$/.exec(location.hash);
+    if (jeton) { history.replaceState(null, "", "#masterclass"); return pointerParQr(jeton[1]); }
     allerA(location.hash.replace("#", "") || "apercu");
   }
   async function verifierAdmin(user) {
@@ -92,7 +94,7 @@
   $("btnDeconnexion").addEventListener("click", async function () { await sb.auth.signOut(); location.hash = ""; location.reload(); });
 
   // ---------- Navigation ----------
-  var TITRES = { clients: "Comptes clients", assistant: "Assistant", apercu: "Vue d'ensemble", inscrits: "Inscrits", code: "Vérifier un code", demandes: "Demandes de réservation", site: "Modifier le site", jeu: "Jeu de la roue", compte: "Mon compte" };
+  var TITRES = { masterclass: "Masterclass", clients: "Comptes clients", assistant: "Assistant", apercu: "Vue d'ensemble", inscrits: "Inscrits", code: "Vérifier un code", demandes: "Demandes de réservation", site: "Modifier le site", jeu: "Jeu de la roue", compte: "Mon compte" };
   function allerA(v) {
     if (!TITRES[v]) v = "apercu";
     document.querySelectorAll(".vue").forEach(function (s) { s.hidden = s.getAttribute("data-vue") !== v; });
@@ -120,6 +122,7 @@
     etat.demandes = r[1].data || [];
     etat.params = r[2].data || null;
     afficherApercu(); afficherInscrits(); afficherDemandes(); afficherJeu(); afficherClients();
+    chargerMc();
     if (etat.contenu) { etat.brouillon = JSON.parse(JSON.stringify(etat.contenu)); construireEditeur(); }
   }
   async function chargerContenu() {
@@ -740,6 +743,237 @@
     $("chatForm").addEventListener("submit", function (e) { e.preventDefault(); envoyerChat($("chatTexte").value); });
     $("chatTexte").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerChat($("chatTexte").value); } });
   })();
+
+  // ---------- Masterclass ----------
+  var MC = { liste: [], resas: [], ouverte: null, paiement: null };
+  var STATUT_MC = {
+    carte_en_attente: { t: "Carte non finalisée", c: "badge--expire" },
+    confirmee: { t: "Réservé", c: "badge--confirmee" },
+    venu: { t: "Présent ✓", c: "badge--venu" },
+    debit_en_cours: { t: "Prélèvement en cours", c: "badge--attente" },
+    absent_debite: { t: "Absent · prélevé", c: "badge--debite" },
+    absent_echec: { t: "Absent · prélèvement refusé", c: "badge--echec" },
+    absent_excuse: { t: "Absent · excusé", c: "badge--expire" },
+    annulee: { t: "Annulé par le client", c: "badge--expire" }
+  };
+  function eurosMc(c) { return (c / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" }); }
+  function dateMc(d) {
+    var x = new Date(d);
+    return x.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" }) + " à " +
+      x.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).replace(":", "h");
+  }
+  function versChampDate(d) {
+    var x = new Date(d), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return x.getFullYear() + "-" + p(x.getMonth() + 1) + "-" + p(x.getDate()) + "T" + p(x.getHours()) + ":" + p(x.getMinutes());
+  }
+  async function fonctionMc(action, donnees) {
+    var s = (await sb.auth.getSession()).data.session;
+    try {
+      var rep = await fetch(SUPABASE_URL + "/functions/v1/masterclass", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_CLE, Authorization: "Bearer " + (s ? s.access_token : "") },
+        body: JSON.stringify(Object.assign({ action: action }, donnees || {}))
+      });
+      var d = await rep.json().catch(function () { return {}; });
+      if (!rep.ok && !d.erreur) d.erreur = "serveur";
+      return d;
+    } catch (e) { return { ok: false, erreur: "reseau" }; }
+  }
+  async function chargerMc() {
+    var r = await Promise.all([
+      sb.from("masterclasses").select("*").order("debut", { ascending: false }).limit(500),
+      sb.from("reservations_mc").select("*").neq("statut", "carte_en_attente").order("created_at").limit(10000)
+    ]);
+    MC.liste = r[0].data || []; MC.resas = r[1].data || [];
+    MC.indisponible = !!r[0].error;
+    afficherMc();
+    if (MC.paiement === null) fonctionMc("etat").then(function (d) { MC.paiement = d.ok ? d : { paiement: false, inconnu: true }; afficherEtatMc(); });
+  }
+  function afficherEtatMc() {
+    var z = vider($("mcEtat"));
+    if (MC.indisponible) return z.appendChild(el("div", { class: "mc-alerte mc-alerte--ko", text: "Le module Masterclass n'est pas encore installé dans la base de données (script à lancer dans Supabase)." }));
+    if (!MC.paiement) return;
+    if (!MC.paiement.paiement) z.appendChild(el("div", { class: "mc-alerte" }, el("b", { text: "Paiement pas encore activé. " }), "Vous pouvez déjà créer et publier des masterclass, mais les clients ne pourront réserver qu'une fois les clés Stripe du Millésime ajoutées dans Supabase (secrets STRIPE_SECRET_KEY et STRIPE_PUBLISHABLE_KEY). En attendant, la page invite à réserver par téléphone."));
+    else if (MC.paiement.mode_test) z.appendChild(el("div", { class: "mc-alerte" }, el("b", { text: "Mode test. " }), "Les paiements sont fictifs (carte de test 4242 4242 4242 4242). Passez aux clés « live » de Stripe pour encaisser pour de vrai."));
+    else z.appendChild(el("div", { class: "mc-alerte mc-alerte--ok", text: "Paiement Stripe activé : les absents peuvent être prélevés." }));
+  }
+  function resasDe(id) { return MC.resas.filter(function (r) { return r.masterclass_id === id && r.statut !== "annulee"; }); }
+  function afficherMc() {
+    afficherEtatMc();
+    var z = vider($("mcListe"));
+    if (!MC.liste.length && !MC.indisponible) z.appendChild(el("p", { class: "muted", text: "Aucune masterclass pour l'instant. Cliquez sur « + Nouvelle masterclass »." }));
+    var maintenant = Date.now();
+    var aVenir = MC.liste.filter(function (m) { return new Date(m.debut).getTime() > maintenant - 12 * 3600000; }).reverse();
+    var passees = MC.liste.filter(function (m) { return new Date(m.debut).getTime() <= maintenant - 12 * 3600000; });
+    aVenir.concat(passees).forEach(function (m) {
+      var R = resasDe(m.id), passee = new Date(m.debut).getTime() <= maintenant;
+      var aPrelever = R.filter(function (r) { return r.statut === "confirmee" || r.statut === "absent_echec"; }).length;
+      z.appendChild(el("div", { class: "mc-ligne" + (passee ? " mc-ligne--passee" : "") },
+        el("div", {},
+          el("h3", { text: m.titre }),
+          el("div", { class: "muted" }, dateMc(m.debut) + " · " + eurosMc(m.prix_cents) + " · " + R.length + " / " + m.places + " réservés",
+            " ", el("span", { class: "badge " + (m.publiee ? "badge--ok" : "badge--expire"), text: m.publiee ? "En ligne" : "Brouillon (invisible)" }),
+            passee && aPrelever ? el("span", { class: "badge badge--attente", style: "margin-left:.4rem", text: aPrelever + " à traiter" }) : null)),
+        el("div", { class: "btns" },
+          el("button", { type: "button", class: "bouton bouton--or bouton--petit", text: passee ? "Pointage & absents" : "Liste des inscrits", onclick: function () { ouvrirMc(m.id); } }),
+          el("button", { type: "button", class: "bouton bouton--petit", text: "Modifier", onclick: function () { formulaireMc(m); } }))));
+    });
+    if (MC.ouverte) detailMc();
+  }
+
+  function formulaireMc(m) {
+    var z = vider($("mcFormulaire")); vider($("mcDetail")); MC.ouverte = null;
+    var nouvelle = !m;
+    m = m || { titre: "", description: "", debut: new Date(Date.now() + 14 * 86400000).setHours(19, 0, 0, 0), duree_minutes: 120, prix_cents: 4500, places: 12, photo: "", publiee: true };
+    var photo = m.photo || "";
+    var f = el("form", { class: "panneau mc-form" });
+    var titre = el("input", { required: true, maxlength: 120, value: m.titre, placeholder: "Ex. : Les grands blancs de Bourgogne" });
+    var debut = el("input", { type: "datetime-local", required: true, value: versChampDate(m.debut) });
+    var duree = el("input", { type: "number", min: 15, max: 720, step: 15, required: true, value: m.duree_minutes });
+    var prix = el("input", { type: "number", min: 1, max: 5000, step: "0.5", required: true, value: (m.prix_cents / 100) });
+    var places = el("input", { type: "number", min: 1, max: 500, required: true, value: m.places });
+    var desc = el("textarea", { maxlength: 3000, placeholder: "Programme, vins dégustés, accords…", value: m.description });
+    desc.value = m.description || "";
+    var apercu = el("img", { alt: "", style: "max-width:220px;max-height:140px;object-fit:cover;display:" + (photo ? "block" : "none") });
+    if (photo) apercu.src = photo;
+    var fichier = el("input", { type: "file", accept: "image/*" });
+    fichier.addEventListener("change", async function () {
+      if (!fichier.files[0]) return;
+      toast("Envoi de la photo…");
+      try { photo = await televerser(fichier.files[0]); apercu.src = photo; apercu.style.display = "block"; toast("Photo ajoutée ✓"); }
+      catch (e) { toast("La photo n'a pas pu être envoyée.", true); }
+    });
+    var publiee = el("input", { type: "checkbox", checked: m.publiee });
+    var R = nouvelle ? [] : resasDe(m.id);
+    f.appendChild(el("h2", { class: "plein", text: nouvelle ? "Nouvelle masterclass" : "Modifier la masterclass" }));
+    f.appendChild(el("label", { class: "plein" }, "Titre", titre));
+    f.appendChild(el("label", {}, "Date et heure de début", debut));
+    f.appendChild(el("label", {}, "Durée (en minutes)", duree));
+    f.appendChild(el("label", {}, "Prix par personne (€) — réglé sur place, prélevé si absent", prix));
+    f.appendChild(el("label", {}, "Nombre de places", places));
+    f.appendChild(el("label", { class: "plein" }, "Description", desc));
+    f.appendChild(el("label", { class: "plein" }, "Photo (facultatif)", fichier, apercu));
+    f.appendChild(el("label", { class: "interrupteur plein" }, publiee, el("span", { text: "Visible sur le site (sinon : brouillon)" })));
+    if (R.length) f.appendChild(el("p", { class: "plein muted", text: "Attention : " + R.length + " personne(s) ont déjà réservé. Si vous changez le prix, le montant prélevé en cas d'absence change aussi : prévenez-les." }));
+    var btns = el("div", { class: "plein mc-actions" },
+      el("button", { type: "submit", class: "bouton bouton--or", text: nouvelle ? "Créer la masterclass" : "Enregistrer" }),
+      el("button", { type: "button", class: "bouton", text: "Annuler", onclick: function () { vider(z); } }),
+      !nouvelle && !R.length ? el("button", { type: "button", class: "bouton bouton--danger", text: "Supprimer", onclick: async function () {
+        if (!confirm("Supprimer définitivement « " + m.titre + " » ?")) return;
+        var r = await sb.from("masterclasses").delete().eq("id", m.id);
+        if (r.error) return toast("Suppression impossible (des réservations existent ?). Passez-la plutôt en brouillon.", true);
+        vider(z); toast("Masterclass supprimée."); chargerMc();
+      } }) : null);
+    f.appendChild(btns);
+    f.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var d = new Date(debut.value);
+      if (isNaN(d.getTime())) return toast("Date invalide.", true);
+      if (Number(places.value) < R.length) return toast("Il y a déjà " + R.length + " réservations : impossible de mettre moins de places.", true);
+      var ligne = {
+        titre: titre.value.trim().slice(0, 120), description: desc.value.trim().slice(0, 3000), debut: d.toISOString(),
+        duree_minutes: Math.round(Number(duree.value)), prix_cents: Math.round(Number(prix.value) * 100),
+        places: Math.round(Number(places.value)), photo: photo || null, publiee: publiee.checked
+      };
+      if (!ligne.titre) return toast("Indiquez un titre.", true);
+      var r = nouvelle ? await sb.from("masterclasses").insert(ligne) : await sb.from("masterclasses").update(ligne).eq("id", m.id);
+      if (r.error) return toast("Enregistrement impossible : vérifiez les champs (prix entre 1 et 5 000 €).", true);
+      vider(z); toast(nouvelle ? "Masterclass créée ✓" : "Enregistré ✓"); chargerMc();
+    });
+    z.appendChild(f);
+    titre.focus();
+  }
+
+  function ouvrirMc(id) { MC.ouverte = id; vider($("mcFormulaire")); detailMc(); $("mcDetail").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  function detailMc() {
+    var z = vider($("mcDetail"));
+    var m = MC.liste.filter(function (x) { return x.id === MC.ouverte; })[0];
+    if (!m) return;
+    var R = resasDe(m.id), commencee = new Date(m.debut).getTime() <= Date.now();
+    var venus = R.filter(function (r) { return r.statut === "venu"; }).length;
+    var aPrelever = R.filter(function (r) { return r.statut === "confirmee" || r.statut === "absent_echec"; });
+    var p = el("div", { class: "panneau" });
+    p.appendChild(el("div", { class: "mc-actions", style: "justify-content:space-between" },
+      el("h2", { style: "margin:0", text: m.titre + " — " + dateMc(m.debut) }),
+      el("button", { type: "button", class: "bouton bouton--petit", text: "Fermer", onclick: function () { MC.ouverte = null; vider(z); } })));
+    p.appendChild(el("div", { class: "mc-resume muted" },
+      el("span", { text: R.length + " réservé(s) sur " + m.places }), el("span", { text: venus + " présent(s)" }),
+      el("span", { text: "Prix : " + eurosMc(m.prix_cents) })));
+    if (!commencee) p.appendChild(el("p", { class: "muted", text: "Le jour J : scannez le QR code du billet du client avec l'appareil photo de votre téléphone (connecté à ce tableau de bord), ou cliquez sur « Présent » à côté de son nom." }));
+    if (commencee && aPrelever.length) {
+      var total = aPrelever.length * m.prix_cents;
+      p.appendChild(el("div", { class: "mc-alerte" },
+        el("p", { style: "margin:0 0 .6rem" }, el("b", { text: aPrelever.length + " personne(s) non pointée(s). " }),
+          "Vérifiez bien la liste : toute personne non marquée « Présent » ou « Excusé » sera prélevée de " + eurosMc(m.prix_cents) + "."),
+        el("button", { type: "button", class: "bouton bouton--or", text: "Débiter les absents (" + aPrelever.length + " × " + eurosMc(m.prix_cents) + " = " + eurosMc(total) + ")", onclick: function (e) { debiterAbsents(m, aPrelever, e.target); } })));
+    }
+    if (!R.length) { p.appendChild(el("p", { class: "muted", text: "Aucune réservation pour le moment." })); z.appendChild(p); return; }
+    var t = el("table", { class: "tableau" });
+    t.appendChild(el("thead", {}, el("tr", {}, el("th", { text: "Prénom" }), el("th", { text: "Téléphone" }), el("th", { text: "E-mail" }), el("th", { text: "Statut" }), el("th", { text: "Actions" }))));
+    var tb = el("tbody");
+    R.sort(function (a, b) { return (a.prenom || "").localeCompare(b.prenom || "", "fr"); }).forEach(function (r) {
+      var s = STATUT_MC[r.statut] || { t: r.statut, c: "" };
+      var act = el("div", { class: "mc-actions" });
+      if (r.statut === "confirmee" || r.statut === "absent_excuse") act.appendChild(el("button", { type: "button", class: "bouton bouton--or bouton--petit", text: "Présent", onclick: function () { pointer({ reservation_id: r.id }); } }));
+      if (r.statut === "venu") act.appendChild(el("button", { type: "button", class: "bouton bouton--petit", text: "Annuler le pointage", onclick: function () { pointer({ reservation_id: r.id, present: false }); } }));
+      if (commencee && (r.statut === "confirmee" || r.statut === "absent_echec")) act.appendChild(el("button", { type: "button", class: "bouton bouton--petit", text: "Excuser (ne pas prélever)", onclick: async function () {
+        if (!confirm(r.prenom + " ne sera pas prélevé(e). Confirmer ?")) return;
+        var d = await fonctionMc("excuser", { reservation_id: r.id });
+        if (!d.ok) return toast("Action impossible.", true);
+        toast("Absence excusée."); chargerMc();
+      } }));
+      tb.appendChild(el("tr", {},
+        el("td", { text: r.prenom || "—" }),
+        el("td", {}, r.telephone ? el("a", { href: "tel:" + r.telephone, text: telAffiche(r.telephone) }) : "—"),
+        el("td", {}, el("a", { href: "mailto:" + r.email, text: r.email })),
+        el("td", {}, el("span", { class: "badge " + s.c, text: s.t }), r.statut === "absent_echec" && r.erreur ? el("div", { class: "muted", style: "font-size:.8rem", text: raisonEchec(r.erreur) }) : null,
+          r.statut === "absent_debite" && r.montant_debite_cents ? el("div", { class: "muted", style: "font-size:.8rem", text: eurosMc(r.montant_debite_cents) + " le " + dateFr(r.debite_le) }) : null),
+        el("td", {}, act)));
+    });
+    t.appendChild(tb);
+    p.appendChild(el("div", { class: "tableau-wrap" }, t));
+    z.appendChild(p);
+  }
+  function raisonEchec(e) {
+    if (/insufficient_funds/.test(e)) return "Fonds insuffisants";
+    if (/authentication_required/.test(e)) return "La banque demande une validation du client : contactez-le";
+    if (/expired_card/.test(e)) return "Carte expirée";
+    if (/sans_carte/.test(e)) return "Aucune carte enregistrée";
+    if (/card_declined|do_not_honor|generic_decline/.test(e)) return "Carte refusée par la banque";
+    return "Prélèvement refusé";
+  }
+  async function pointer(donnees) {
+    var d = await fonctionMc("pointer", donnees);
+    if (!d.ok) { toast(d.erreur === "statut" ? "Cette réservation ne peut pas être pointée (annulée ou déjà traitée)." : "Pointage impossible.", true); return d; }
+    toast(donnees.present === false ? "Pointage annulé." : (d.reservation.prenom || "Client") + " est marqué(e) présent(e) ✓");
+    chargerMc();
+    return d;
+  }
+  async function debiterAbsents(m, liste, bouton) {
+    var noms = liste.map(function (r) { return "• " + (r.prenom || r.email); }).join("\n");
+    if (!confirm("Prélever " + eurosMc(m.prix_cents) + " à chacune de ces personnes, absentes sans avoir annulé ?\n\n" + noms + "\n\nCette action débite réellement leur carte.")) return;
+    bouton.disabled = true; bouton.textContent = "Prélèvements en cours…";
+    var d = await fonctionMc("debiter_absents", { masterclass_id: m.id });
+    if (!d.ok) {
+      bouton.disabled = false; bouton.textContent = "Réessayer";
+      return toast(d.erreur === "paiement_inactif" ? "Le paiement Stripe n'est pas encore activé." : d.erreur === "pas_commencee" ? "La masterclass n'a pas encore commencé." : "Les prélèvements n'ont pas pu être lancés.", true);
+    }
+    alert(d.debites + " prélèvement(s) réussi(s) pour " + eurosMc(d.total_cents) + (d.echecs ? "\n" + d.echecs + " refusé(s) par la banque : voir le détail dans la liste (vous pouvez réessayer plus tard ou contacter la personne)." : ""));
+    chargerMc();
+  }
+  async function pointerParQr(jeton) {
+    allerA("masterclass");
+    var z = vider($("mcPointage"));
+    z.appendChild(el("div", { class: "mc-pointage", text: "Vérification du billet…" }));
+    var d = await fonctionMc("pointer", { jeton: jeton });
+    vider(z);
+    if (d.ok) z.appendChild(el("div", { class: "mc-pointage" }, d.deja ? "Déjà pointé(e)" : "Billet valide ✓", el("b", { text: d.reservation.prenom || "Client" }), d.masterclass ? d.masterclass.titre + " — " + dateMc(d.masterclass.debut) : ""));
+    else z.appendChild(el("div", { class: "mc-pointage mc-pointage--ko" }, "Billet non valable", el("b", { text: d.prenom || "" }),
+      d.erreur === "introuvable" ? "Ce billet n'existe pas." : d.erreur === "statut" ? "Réservation annulée ou déjà traitée." : "Vérification impossible, réessayez."));
+    chargerMc();
+    setTimeout(function () { vider(z); }, 15000);
+  }
+  $("mcNouvelle").addEventListener("click", function () { formulaireMc(null); });
 
   demarrer();
 })();

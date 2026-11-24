@@ -38,6 +38,13 @@
   .ligne-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
   .btn--contour { background: transparent; border: 1px solid var(--marine-dark); color: var(--marine-dark); }
   .btn--danger { background: transparent; border: 1px solid #a13b2f; color: #a13b2f; }
+  .billet { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: var(--sp-4); background: #fff; border-left: 4px solid var(--or); }
+  @media (min-width: 640px) { .billet { grid-template-columns: 1fr auto; align-items: center; } }
+  .billet b { font-family: var(--font-serif); font-size: 1.2rem; display: block; }
+  .billet__qr { width: 150px; height: 150px; background: #fff; }
+  .billet__qr img { width: 100%; height: 100%; image-rendering: pixelated; }
+  .billet__infos { display: grid; gap: .4rem; justify-items: start; }
+  .petit-texte { font-size: .88rem; opacity: .85; margin: 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -61,6 +68,7 @@
         <li><a href="index.html#histoire">Histoire</a></li>
         <li><a href="index.html#propose">Ce qu'on propose</a></li>
         <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="masterclass.html">Masterclass</a></li>
         <li><a href="index.html#evenements">Événements</a></li>
         <li><a href="index.html#infos-pratiques">Infos pratiques</a></li>
       </ul>
@@ -132,6 +140,11 @@
           </div>
         </div>
 
+        <div class="carte-compte" id="carteMc" hidden style="margin-bottom:var(--sp-6);">
+          <h2>Mes masterclass</h2>
+          <div class="liste-gains" id="mesMc"></div>
+        </div>
+
         <div class="compte__grille">
           <div class="carte-compte">
             <h2>Mes gains</h2>
@@ -179,6 +192,7 @@
       <ul class="footer-nav">
         <li><a href="index.html">Accueil</a></li>
         <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="masterclass.html">Masterclass</a></li>
         <li><a href="contact.html">Réservation &amp; Contact</a></li>
         <li><a href="roue.html">Tentez votre chance</a></li>
       </ul>
@@ -190,6 +204,7 @@
 
 <script src="script.js"></script>
 <script src="vendor/supabase-2.45.4.min.js"></script>
+<script src="vendor/qrcode-generator-2.0.4.js"></script>
 <script src="compte.js"></script>
 </body>
 </html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masterclass vin à Sens — Le Millésime, cave &amp; bar à vin</title>
+<meta name="description" content="Masterclass et dégustations commentées au Millésime, cave et bar à vin à Sens (89100). Réservez votre place en ligne, vous réglez sur place.">
+<link rel="canonical" href="https://le-millesime.fr/masterclass.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Masterclass vin — Le Millésime, Sens">
+<meta property="og:description" content="Dégustations commentées et masterclass au Millésime, à Sens. Réservez votre place en ligne.">
+<meta property="og:image" content="https://le-millesime.fr/assets/img/gallery-degustation.jpg">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .mc { background: var(--creme); }
+  .mc__liste { display: grid; gap: var(--sp-6); }
+  .mc-carte { display: grid; grid-template-columns: 1fr; background: #FBF8F1; border-top: 4px solid var(--or); box-shadow: 0 20px 40px -28px rgba(10,33,64,.35); overflow: hidden; }
+  @media (min-width: 860px) { .mc-carte { grid-template-columns: 340px 1fr; } }
+  .mc-carte__photo { min-height: 220px; background: var(--marine) center/cover no-repeat; }
+  .mc-carte__corps { padding: var(--sp-6); display: grid; gap: var(--sp-4); align-content: start; }
+  .mc-carte__date { font-weight: 600; color: var(--or-deep); letter-spacing: .04em; text-transform: uppercase; font-size: .85rem; margin: 0; }
+  .mc-carte h2 { font-size: var(--fs-h3); margin: 0; }
+  .mc-carte__desc { margin: 0; white-space: pre-line; }
+  .mc-carte__infos { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 0; padding: 0; list-style: none; font-size: .95rem; }
+  .mc-carte__infos b { font-family: var(--font-serif); font-size: 1.2rem; color: var(--marine-dark); }
+  .mc-carte__bas { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+  .pastille-places { font-size: .85rem; font-weight: 600; padding: .25rem .7rem; border-radius: 99px; background: #EAF4EC; color: #2f6b3a; }
+  .pastille-places--peu { background: #FFF4DC; color: #8A6116; }
+  .pastille-places--complet { background: #EEE; color: #666; }
+  .vide { font-style: italic; opacity: .8; }
+  .regles { margin-top: var(--sp-8); background: #fff; padding: var(--sp-6); border-left: 4px solid var(--or); }
+  .regles h2 { font-size: var(--fs-h3); margin-top: 0; }
+  .regles ol { padding-left: 1.2rem; display: grid; gap: .5rem; margin: 0; }
+  /* Fenêtre de réservation */
+  .resa-fond { position: fixed; inset: 0; background: rgba(7,21,38,.62); display: flex; align-items: flex-start; justify-content: center; padding: 4vh 16px; z-index: 1000; overflow-y: auto; }
+  .resa { background: #FBF8F1; width: 100%; max-width: 560px; padding: var(--sp-6); position: relative; border-top: 4px solid var(--or); }
+  .resa h2 { font-size: var(--fs-h3); margin: 0 2rem var(--sp-2) 0; }
+  .resa__fermer { position: absolute; top: .6rem; right: .8rem; background: none; border: 0; font-size: 1.8rem; line-height: 1; cursor: pointer; color: var(--marine-dark); }
+  .resa__resume { margin: 0 0 var(--sp-4); color: var(--marine); }
+  .resa .form { max-width: none; gap: var(--sp-4); }
+  .consent { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: .95rem; color: var(--marine-dark); }
+  .consent span { font-family: var(--font-sans); font-weight: 400; }
+  .consent input { width: 20px !important; height: 20px; margin-top: 3px; flex: 0 0 auto; accent-color: var(--or); }
+  .encadre { background: #fff; padding: var(--sp-4); font-size: .95rem; border-left: 3px solid var(--or); }
+  .encadre p { margin: 0 0 .4rem; } .encadre p:last-child { margin: 0; }
+  .msg { padding: .8rem 1rem; font-size: .95rem; margin: 0; }
+  .msg--ok { background: #EAF4EC; color: #2f6b3a; }
+  .msg--ko { background: #FDF0EE; color: #a13b2f; }
+  .mode-test { font-size: .85rem; background: #FFF4DC; color: #8A6116; padding: .5rem .8rem; }
+  #carteStripe { background: #fff; padding: var(--sp-4); min-height: 60px; }
+  .btn[disabled] { opacity: .6; cursor: wait; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="site-header__inner">
+    <a href="index.html" class="brand">
+      <img src="assets/logo.png" alt="Le Millésime" width="112" height="75" class="brand__logo">
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="siteNav">
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="visually-hidden">Ouvrir le menu</span>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="index.html#histoire">Histoire</a></li>
+        <li><a href="index.html#propose">Ce qu'on propose</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="masterclass.html" aria-current="page">Masterclass</a></li>
+        <li><a href="index.html#evenements">Événements</a></li>
+        <li><a href="index.html#negoce">Espace Négoce</a></li>
+        <li><a href="index.html#infos-pratiques">Infos pratiques</a></li>
+      </ul>
+      <a href="compte.html" class="nav-compte" title="Mon compte"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-compte__texte">Mon compte</span></a>
+      <a href="contact.html" class="btn btn--gold nav-cta">Réserver une table</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenu">
+  <section class="section contact-hero">
+    <div class="section__inner">
+      <p class="eyebrow-quiet">Le Millésime · Dégustations commentées</p>
+      <h1 class="title-left contact-hero__title">Masterclass</h1>
+      <p class="contact-hero__lead">Découvrir une région, un cépage, un domaine : verre en main, guidé par notre sommelier. Réservez votre place en ligne, vous réglez sur place le jour J.</p>
+    </div>
+  </section>
+
+  <section class="section mc">
+    <div class="section__inner">
+      <div class="mc__liste" id="listeMc"><p class="vide">Chargement des prochaines dates…</p></div>
+
+      <div class="regles" id="conditions">
+        <h2>Comment ça marche ?</h2>
+        <ol>
+          <li><b>Vous réservez en ligne</b> avec votre compte Le Millésime et vous enregistrez votre carte bancaire. <b>Rien n'est débité</b> à la réservation.</li>
+          <li><b>Vous réglez votre place sur place</b>, le jour de la masterclass, comme d'habitude.</li>
+          <li><b>Annulation gratuite jusqu'à 48 h avant</b> le début, en un clic depuis « Mon compte ».</li>
+          <li>En cas d'<b>absence sans annulation dans ce délai</b>, le <b>prix de la place</b> est prélevé sur la carte enregistrée, après la masterclass.</li>
+          <li>Le jour J, présentez votre billet (QR code dans « Mon compte ») ou donnez simplement votre nom à l'accueil.</li>
+        </ol>
+        <p style="margin:1rem 0 0;font-size:.9rem;opacity:.85;">Paiement sécurisé par Stripe : vos données bancaires ne sont jamais stockées par Le Millésime. Une question ? <a href="tel:+33670109454">06 70 10 94 54</a>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Fenêtre de réservation -->
+<div class="resa-fond" id="resaFond" hidden>
+  <div class="resa" role="dialog" aria-modal="true" aria-labelledby="resaTitre">
+    <button type="button" class="resa__fermer" id="resaFermer" aria-label="Fermer">×</button>
+    <h2 id="resaTitre">Réserver ma place</h2>
+    <p class="resa__resume" id="resaResume"></p>
+    <p class="msg" id="resaMsg" hidden></p>
+
+    <!-- Pas connecté -->
+    <div id="etapeConnexion" hidden>
+      <p>Pour réserver, connectez-vous à votre compte Le Millésime (ou créez-le en 1 minute).</p>
+      <div class="mc-carte__bas">
+        <a class="btn btn--gold" id="lienConnexion" href="compte.html">Me connecter / créer mon compte</a>
+      </div>
+    </div>
+
+    <!-- Étape 1 : coordonnées + conditions -->
+    <form class="form" id="etapeInfos" hidden novalidate>
+      <div class="form__row form__row--split">
+        <div><label for="rPrenom">Prénom</label><input type="text" id="rPrenom" autocomplete="given-name" required></div>
+        <div><label for="rTel">Téléphone</label><input type="tel" id="rTel" autocomplete="tel" inputmode="tel" required></div>
+      </div>
+      <div class="encadre" id="resaRegles"></div>
+      <label class="consent"><input type="checkbox" id="rConditions"> <span id="rConditionsTexte"></span></label>
+      <button type="submit" class="btn btn--gold" id="btnContinuer">Continuer</button>
+    </form>
+
+    <!-- Étape 2 : carte -->
+    <form class="form" id="etapeCarte" hidden>
+      <p class="mode-test" id="modeTest" hidden>Mode test : utilisez la carte 4242 4242 4242 4242, une date future et n'importe quel code. Aucun argent réel.</p>
+      <div id="carteStripe"></div>
+      <button type="submit" class="btn btn--gold" id="btnCarte">Enregistrer ma carte et réserver</button>
+      <p style="margin:0;font-size:.85rem;opacity:.8;">Aucun débit aujourd'hui. Carte conservée de façon sécurisée par Stripe.</p>
+    </form>
+
+    <!-- Fin -->
+    <div id="etapeFin" hidden>
+      <p class="msg msg--ok" id="finTexte"></p>
+      <div class="mc-carte__bas" style="margin-top:1rem;">
+        <a class="btn btn--gold" href="compte.html">Voir mon billet</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <a href="index.html" class="brand brand--footer">
+      <img src="assets/logo.png" alt="Le Millésime" width="54" height="36" class="brand__logo">
+      <span class="brand__name">Le Millésime</span>
+    </a>
+    <nav aria-label="Liens du pied de page">
+      <ul class="footer-nav">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="masterclass.html">Masterclass</a></li>
+        <li><a href="contact.html">Réservation &amp; Contact</a></li>
+        <li><a href="roue.html">Tentez votre chance</a></li>
+      </ul>
+    </nav>
+    <a href="https://www.instagram.com/le_millesime_sens/" class="footer-instagram" target="_blank" rel="noopener">@le_millesime_sens</a>
+  </div>
+  <p class="site-footer__legal">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+</footer>
+
+<script src="script.js"></script>
+<script src="vendor/supabase-2.45.4.min.js"></script>
+<script src="masterclass.js"></script>
+</body>
+</html>

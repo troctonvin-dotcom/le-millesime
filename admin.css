@@ -223,3 +223,28 @@ textarea { min-height: 110px; resize: vertical; }
 .chat__saisie textarea { min-height: 56px; max-height: 180px; }
 .chat__note { margin: 0; font-size: .82rem; }
 @media (max-width: 860px) { .chat { height: calc(100vh - 110px); } .bulle { max-width: 92%; } }
+
+/* ---------- Masterclass ---------- */
+.mc-liste { display: grid; gap: 1rem; }
+.mc-ligne { display: grid; grid-template-columns: 1fr; gap: .6rem; padding: 1rem 1.2rem; background: #fff; border: 1px solid #E6DFD0; border-left: 4px solid var(--or); }
+@media (min-width: 900px) { .mc-ligne { grid-template-columns: 1fr auto; align-items: center; } }
+.mc-ligne h3 { margin: 0 0 .2rem; font-size: 1.1rem; }
+.mc-ligne--passee { border-left-color: #C9C2B2; opacity: .92; }
+.mc-ligne .btns, .mc-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.mc-alerte { padding: .9rem 1.1rem; margin-bottom: 1rem; background: #FFF4DC; color: #6d4c10; border-left: 4px solid var(--or); }
+.mc-alerte--ok { background: #EAF4EC; color: var(--vert); border-left-color: var(--vert); }
+.mc-alerte--ko { background: #FDF0EE; color: var(--rouge); border-left-color: var(--rouge); }
+.mc-pointage { padding: 1.4rem; margin-bottom: 1rem; text-align: center; font-size: 1.2rem; border: 2px solid var(--vert); background: #EAF4EC; color: var(--vert); }
+.mc-pointage--ko { border-color: var(--rouge); background: #FDF0EE; color: var(--rouge); }
+.mc-pointage b { display: block; font-size: 1.8rem; font-family: "Fraunces", Georgia, serif; margin: .3rem 0; }
+.mc-form { display: grid; gap: .9rem; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .mc-form { grid-template-columns: 1fr 1fr; } .mc-form .plein { grid-column: 1 / -1; } }
+.mc-form label { display: grid; gap: .3rem; font-weight: 500; }
+.mc-form input, .mc-form textarea { font: inherit; padding: .55rem .7rem; border: 1px solid #D6CDBA; border-radius: 6px; background: #fff; }
+.mc-form textarea { min-height: 110px; resize: vertical; }
+.mc-resume { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; margin: .4rem 0 1rem; }
+.badge--venu { background: #EAF4EC; color: var(--vert); }
+.badge--confirmee { background: #E8EDF4; color: var(--marine-2); }
+.badge--debite { background: #F6E3E8; color: var(--vin); }
+.badge--echec { background: #FDF0EE; color: var(--rouge); }
+.mc-form label.interrupteur { display: inline-flex; }
