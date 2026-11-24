@@ -69,3 +69,12 @@ drop policy if exists "demandes: le client voit ses demandes" on public.demandes
 create policy "demandes: le client voit ses demandes" on public.demandes for select to authenticated
   using (lower(email) = lower((select auth.jwt()->>'email')) and (select public.email_confirme()));
 create index if not exists demandes_email_idx on public.demandes (lower(email));
+
+-- Récupère les comptes clients créés avant l'installation de ce script
+insert into public.clients (user_id, prenom, telephone, newsletter)
+select u.id, left(coalesce(u.raw_user_meta_data->>'prenom', ''), 80),
+  nullif(left(coalesce(u.raw_user_meta_data->>'telephone', ''), 30), ''),
+  coalesce((u.raw_user_meta_data->>'newsletter')::boolean, false)
+from auth.users u
+where coalesce(u.raw_user_meta_data->>'type', '') = 'client'
+on conflict (user_id) do nothing;
