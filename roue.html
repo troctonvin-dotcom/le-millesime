@@ -170,6 +170,10 @@
               <label for="telephone">Téléphone</label>
               <input type="tel" id="telephone" name="telephone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required>
             </div>
+            <div class="form__row">
+              <label for="motdepasse">Choisissez un mot de passe <span style="font-weight:400;opacity:.75">(pour retrouver vos gains dans « Mon compte »)</span></label>
+              <input type="password" id="motdepasse" name="motdepasse" autocomplete="new-password" minlength="8" placeholder="8 caractères minimum" required>
+            </div>
             <label class="consent"><input type="checkbox" id="majeur" required> <span>J'ai 18 ans ou plus.</span></label>
             <label class="consent"><input type="checkbox" id="optin" required> <span>J'accepte de recevoir la newsletter du Millésime (une par mois environ). Désinscription possible à tout moment.</span></label>
             <button type="submit" class="btn btn--gold form__submit" id="btnJouer" disabled>Tourner la roue</button>
@@ -188,6 +192,7 @@
             <p class="petit" id="resConditions"></p>
           </div>
           <p class="petit" id="resMerci">Merci pour votre inscription. Faites une capture d'écran de cette page.</p>
+          <p class="petit">Votre compte Le Millésime est créé : confirmez votre adresse grâce à l'e-mail reçu, puis retrouvez vos gains dans <a href="compte.html" target="_top">Mon compte</a>.</p>
           <a href="contact.html" target="_top" class="btn btn--gold" style="margin-top:1rem;">Réserver une table</a>
         </div>
       </div>
@@ -254,6 +259,7 @@
 </footer>
 
 <script src="script.js"></script>
+<script src="vendor/supabase-2.45.4.min.js"></script>
 <script>
 (function () {
   "use strict";
@@ -450,7 +456,7 @@
     var email = form.email.value.trim();
     var tel = form.telephone.value.replace(/[\s.\-()]/g, "");
     return form.prenom.value.trim() !== "" && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email) &&
-      /^\+?\d{9,15}$/.test(tel) &&
+      /^\+?\d{9,15}$/.test(tel) && form.motdepasse.value.length >= 8 &&
       document.getElementById("majeur").checked && document.getElementById("optin").checked;
   }
   form.addEventListener("input", function () { btn.disabled = !valide(); });
@@ -555,6 +561,15 @@
             _replyto: envoi.email, _template: "table", _captcha: "false"
           })
         }).catch(function () {});
+
+        // Création du compte client (e-mail de confirmation envoyé par Le Millésime)
+        try {
+          var sbClient = window.supabase.createClient("https://tqaaffgopecaixrjcvbi.supabase.co", CLE);
+          sbClient.auth.signUp({
+            email: envoi.email, password: form.motdepasse.value,
+            options: { emailRedirectTo: location.origin + "/compte.html", data: { type: "client", prenom: envoi.prenom, telephone: envoi.telephone, newsletter: true } }
+          }).catch(function () {});
+        } catch (e) { /* le jeu continue même si le compte n'a pas pu être créé */ }
 
         // La roue s'arrête sur une des cases du lot tiré par le serveur
         var cases = []; CASES.forEach(function (k, idx) { if (k === cas) cases.push(idx); });

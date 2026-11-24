@@ -89,6 +89,7 @@
     $("bonjour").textContent = "Bonjour" + (prenom ? " " + prenom : "") + " !";
     $("prPrenom").value = prenom; $("prTel").value = fiche.telephone || ""; $("prNews").checked = !!fiche.newsletter;
     $("lienAdmin").hidden = !r[3].data;
+    if (r[3].data && !/[?&]rester=1/.test(location.search)) { location.href = "admin"; return; }
 
     var g = $("mesGains"); g.textContent = "";
     var gains = r[1].data || [];
