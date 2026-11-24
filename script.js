@@ -192,6 +192,8 @@
 
   // Formulaire de réservation / devis : envoi par e-mail via FormSubmit
   var FORM_ENDPOINT = "https://formsubmit.co/ajax/contact.nrdiffusion@gmail.com";
+  var BASE_URL = "https://tqaaffgopecaixrjcvbi.supabase.co";
+  var BASE_CLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxYWFmZmdvcGVjYWl4cmpjdmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU0NzY4MDgsImV4cCI6MjExMTA1MjgwOH0.l8TBanpiQIQnvHqRCgT-WpvmOXn5PKcmtC374TknVPQ";
   var contactForm = document.getElementById("contactForm");
   if (contactForm) {
     var statusEl = contactForm.querySelector("[data-form-status]");
@@ -248,17 +250,30 @@
         statusEl.removeAttribute("data-state");
       }
 
-      fetch(FORM_ENDPOINT, {
+      // 1) Enregistrement dans le tableau de bord du Millésime
+      var guests = parseInt(get("guests"), 10);
+      var enBase = fetch(BASE_URL + "/rest/v1/demandes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": BASE_CLE, "Authorization": "Bearer " + BASE_CLE, "Prefer": "return=minimal" },
+        body: JSON.stringify({
+          nom: get("name"), email: get("email"), telephone: get("phone") || null, objet: subject,
+          date_souhaitee: get("date") || null, personnes: isNaN(guests) ? null : guests, message: get("message")
+        })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+
+      // 2) Notification par e-mail
+      var parMail = fetch(FORM_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(payload)
       })
-        .then(function (response) {
-          if (!response.ok) throw new Error("network");
-          return response.json();
-        })
-        .then(function (data) {
-          if (!data || String(data.success) !== "true") throw new Error("refused");
+        .then(function (response) { return response.ok ? response.json() : null; })
+        .then(function (data) { return !!data && String(data.success) === "true"; })
+        .catch(function () { return false; });
+
+      Promise.all([enBase, parMail])
+        .then(function (r) {
+          if (!r[0] && !r[1]) throw new Error("refused");
           contactForm.reset();
           contactForm.hidden = true;
           showStatus("Merci, votre demande a bien été envoyée — on vous répond très vite.", "success");
@@ -274,8 +289,7 @@
   // (page d'accueil uniquement, une fois par visite, jamais si la personne a déjà joué)
   var roueOuverte = false;
   (function () {
-    var chemin = window.location.pathname;
-    var surAccueil = chemin === "/" || /\/index\.html$/.test(chemin);
+    var surAccueil = document.body && document.body.getAttribute("data-roue-popup") === "1";
     var dejaJoue = false, dejaFerme = false;
     try {
       dejaJoue = !!window.localStorage.getItem("millesime-roue-v1");

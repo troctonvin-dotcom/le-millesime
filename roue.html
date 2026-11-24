@@ -165,6 +165,10 @@
               <label for="email">E-mail</label>
               <input type="email" id="email" name="email" autocomplete="email" required>
             </div>
+            <div class="form__row">
+              <label for="telephone">Téléphone</label>
+              <input type="tel" id="telephone" name="telephone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required>
+            </div>
             <label class="consent"><input type="checkbox" id="majeur" required> <span>J'ai 18 ans ou plus.</span></label>
             <label class="consent"><input type="checkbox" id="optin" required> <span>J'accepte de recevoir la newsletter du Millésime (une par mois environ). Désinscription possible à tout moment.</span></label>
             <button type="submit" class="btn btn--gold form__submit" id="btnJouer" disabled>Tourner la roue</button>
@@ -443,7 +447,9 @@
 
   function valide() {
     var email = form.email.value.trim();
-    return form.prenom.value.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+    var tel = form.telephone.value.replace(/[\s.\-()]/g, "");
+    return form.prenom.value.trim() !== "" && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email) &&
+      /^\+?\d{9,15}$/.test(tel) &&
       document.getElementById("majeur").checked && document.getElementById("optin").checked;
   }
   form.addEventListener("input", function () { btn.disabled = !valide(); });
@@ -494,47 +500,73 @@
     afficherResultat(deja, false);
   }
 
+  var FONCTION = "https://tqaaffgopecaixrjcvbi.supabase.co/functions/v1/jouer";
+  var CLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxYWFmZmdvcGVjYWl4cmpjdmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU0NzY4MDgsImV4cCI6MjExMTA1MjgwOH0.l8TBanpiQIQnvHqRCgT-WpvmOXn5PKcmtC374TknVPQ";
+  var statusEl = document.getElementById("jeuStatus");
+  function erreur(msg) {
+    statusEl.textContent = msg; statusEl.setAttribute("data-state", "error"); statusEl.hidden = false;
+    btn.disabled = !valide(); btn.textContent = "Tourner la roue";
+  }
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!valide() || form["bot-field"].value !== "") return;
     if (lireDejaJoue() || etat === "tourne") return;
     btn.disabled = true;
-    btn.textContent = "La roue tourne…";
+    btn.textContent = "Un instant…";
+    statusEl.hidden = true;
 
-    var i = hasard(n), cas = CASES[i], lot = LOTS[cas];
-    var fin = new Date(); fin.setDate(fin.getDate() + 30);
-    var r = {
-      prenom: form.prenom.value.trim(),
-      email: form.email.value.trim(),
-      cas: cas,
-      code: lot.prefix ? codeGain(lot.prefix) : "",
-      validite: fin.toLocaleDateString("fr-FR"),
-      date: new Date().toLocaleString("fr-FR")
+    var envoi = {
+      prenom: form.prenom.value.trim(), email: form.email.value.trim(), telephone: form.telephone.value.trim(),
+      majeur: document.getElementById("majeur").checked, newsletter: document.getElementById("optin").checked,
+      source: /[?&]embed=1/.test(location.search) ? "fenetre-accueil" : "page-roue", piege: form["bot-field"].value
     };
-    ecrireJoue(r);
 
-    var rr = roue.getBoundingClientRect();
-    if (rr.top < 0 || rr.bottom > window.innerHeight) roue.scrollIntoView({ behavior: reduit ? "auto" : "smooth", block: "center" });
+    fetch(FONCTION, { method: "POST", headers: { "Content-Type": "application/json", "apikey": CLE, "Authorization": "Bearer " + CLE }, body: JSON.stringify(envoi) })
+      .then(function (rep) { return rep.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          if (d && d.deja) return erreur("Vous avez déjà participé avec cette adresse e-mail ou ce numéro. Une participation par personne.");
+          if (d && d.erreur === "ferme") return erreur("Le jeu est terminé pour le moment. Merci et à bientôt au Millésime !");
+          if (d && d.erreur === "telephone") return erreur("Ce numéro de téléphone ne semble pas valide.");
+          if (d && d.erreur === "email") return erreur("Cette adresse e-mail ne semble pas valide.");
+          return erreur("Le jeu n'a pas pu démarrer. Vérifiez votre connexion et réessayez.");
+        }
+        var cas = d.lot, lot = LOTS[cas];
+        var r = {
+          prenom: d.prenom || envoi.prenom, cas: cas, code: d.code || "",
+          validite: d.valide_jusqu ? new Date(d.valide_jusqu + "T12:00:00").toLocaleDateString("fr-FR") : ""
+        };
+        ecrireJoue(r);
+        btn.textContent = "La roue tourne…";
 
-    // Envoi au Millésime (inscription + gain), sans bloquer le jeu
-    fetch(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({
-        "Prénom": r.prenom, "Email": r.email, "Newsletter": "Oui (accord donné)", "Majeur": "Oui",
-        "Résultat": lot.long, "Code": r.code || "—", "Valable jusqu'au": lot.prefix ? r.validite : "—", "Date": r.date,
-        _subject: "Le Millésime — Roue : " + (lot.prefix ? lot.long + " (" + r.code + ")" : "inscription") + " — " + r.prenom,
-        _replyto: r.email, _template: "table", _captcha: "false"
+        var rr = roue.getBoundingClientRect();
+        if (rr.top < 0 || rr.bottom > window.innerHeight) roue.scrollIntoView({ behavior: reduit ? "auto" : "smooth", block: "center" });
+
+        // Notification par e-mail au Millésime (en plus du tableau de bord)
+        fetch(ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            "Prénom": r.prenom, "Email": envoi.email, "Téléphone": envoi.telephone, "Résultat": lot.long,
+            "Code": r.code || "—", "Valable jusqu'au": r.validite || "—",
+            _subject: "Le Millésime — Roue : " + (lot.prefix ? lot.long + " (" + r.code + ")" : "inscription") + " — " + r.prenom,
+            _replyto: envoi.email, _template: "table", _captcha: "false"
+          })
+        }).catch(function () {});
+
+        // La roue s'arrête sur une des cases du lot tiré par le serveur
+        var cases = []; CASES.forEach(function (k, idx) { if (k === cas) cases.push(idx); });
+        var i = cases[hasard(cases.length)];
+        lancer(i, function () {
+          if (lot.prefix) { roue.classList.add("gagne"); confettis(); }
+          setTimeout(function () {
+            afficherResultat(r, true);
+            if (window.innerWidth < 900) etapeRes.scrollIntoView({ behavior: reduit ? "auto" : "smooth", block: "start" });
+          }, reduit ? 200 : 900);
+        });
       })
-    }).catch(function () {});
-
-    lancer(i, function () {
-      if (lot.prefix) { roue.classList.add("gagne"); confettis(); }
-      setTimeout(function () {
-        afficherResultat(r, true);
-        if (window.innerWidth < 900) etapeRes.scrollIntoView({ behavior: reduit ? "auto" : "smooth", block: "start" });
-      }, reduit ? 200 : 900);
-    });
+      .catch(function () { erreur("Le jeu n'a pas pu démarrer. Vérifiez votre connexion et réessayez."); });
   });
 })();
 </script>

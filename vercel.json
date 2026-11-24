@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/api/page?p=accueil" },
+    { "source": "/index.html", "destination": "/api/page?p=accueil" },
+    { "source": "/galerie.html", "destination": "/api/page?p=galerie" },
+    { "source": "/contact.html", "destination": "/api/page?p=contact" },
+    { "source": "/llms.txt", "destination": "/api/page?p=llms" },
+    { "source": "/admin", "destination": "/admin.html" }
+  ],
+  "headers": [
+    { "source": "/admin(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }, { "key": "Cache-Control", "value": "no-store" }] }
+  ]
+}

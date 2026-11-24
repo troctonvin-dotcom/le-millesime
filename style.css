@@ -1248,3 +1248,7 @@ button:focus-visible {
 .roue-modal__fermer:hover { background: var(--marine); }
 html.roue-modal-ouverte, html.roue-modal-ouverte body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .roue-modal, .roue-modal__boite { transition: none; } }
+
+/* ---- Bandeau d'annonce (géré depuis le tableau de bord) ---- */
+.annonce { position: absolute; top: var(--header-height); left: 0; right: 0; z-index: 90; background: var(--or-clair); color: var(--marine-dark); text-align: center; font-weight: 600; font-size: .95rem; padding: .55rem 1.25rem; }
+.annonce a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

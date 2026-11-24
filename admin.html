@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Tableau de bord — Le Millésime</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- Connexion -->
+<div class="connexion" id="ecranConnexion" hidden>
+  <form class="connexion__boite" id="formConnexion">
+    <div class="connexion__logo"><img src="assets/logo.png" alt="Le Millésime"></div>
+    <h1>Tableau de bord</h1>
+    <p class="muted">Connectez-vous pour gérer le site et les inscrits.</p>
+    <label>E-mail<input type="email" id="cxEmail" autocomplete="username" required></label>
+    <label>Mot de passe<input type="password" id="cxMdp" autocomplete="current-password" required></label>
+    <button class="bouton bouton--or" type="submit" id="cxBouton">Se connecter</button>
+    <p class="message" id="cxMessage" hidden></p>
+  </form>
+</div>
+
+<!-- Application -->
+<div class="app" id="app" hidden>
+  <aside class="menu" id="menu">
+    <div class="menu__logo"><img src="assets/logo.png" alt="Le Millésime"><span>Tableau de bord</span></div>
+    <nav>
+      <button class="menu__lien" data-vue="apercu"><span class="ico">◧</span>Vue d'ensemble</button>
+      <button class="menu__lien" data-vue="inscrits"><span class="ico">☺</span>Inscrits</button>
+      <button class="menu__lien" data-vue="code"><span class="ico">✓</span>Vérifier un code</button>
+      <button class="menu__lien" data-vue="demandes"><span class="ico">✉</span>Demandes<span class="pastille" id="pastilleDemandes" hidden></span></button>
+      <button class="menu__lien" data-vue="site"><span class="ico">✎</span>Modifier le site</button>
+      <button class="menu__lien" data-vue="jeu"><span class="ico">◎</span>Jeu de la roue</button>
+      <button class="menu__lien" data-vue="compte"><span class="ico">⚙</span>Mon compte</button>
+    </nav>
+    <a class="menu__site" href="/" target="_blank" rel="noopener">Voir le site ↗</a>
+  </aside>
+
+  <main class="contenu" id="contenu">
+    <header class="barre">
+      <button class="barre__menu" id="ouvrirMenu" aria-label="Menu">☰</button>
+      <h1 id="titreVue">Vue d'ensemble</h1>
+      <span class="barre__user" id="userEmail"></span>
+    </header>
+
+    <!-- Vue d'ensemble -->
+    <section class="vue" data-vue="apercu">
+      <div class="cartes-stats" id="stats"></div>
+      <div class="grille-2">
+        <div class="panneau">
+          <h2>Inscriptions des 30 derniers jours</h2>
+          <div id="graphique" class="graphique"></div>
+        </div>
+        <div class="panneau">
+          <h2>Gains de la roue</h2>
+          <div id="repartition"></div>
+        </div>
+      </div>
+      <div class="grille-2">
+        <div class="panneau">
+          <h2>Derniers inscrits</h2>
+          <div id="derniersInscrits"></div>
+        </div>
+        <div class="panneau">
+          <h2>Dernières demandes</h2>
+          <div id="dernieresDemandes"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inscrits -->
+    <section class="vue" data-vue="inscrits" hidden>
+      <div class="outils">
+        <input type="search" id="rechInscrits" placeholder="Rechercher un nom, un e-mail, un téléphone, un code…">
+        <select id="filtreLot">
+          <option value="">Tous les résultats</option>
+          <option value="V">2 verres</option>
+          <option value="R">−10 %</option>
+          <option value="P">Perdu</option>
+        </select>
+        <select id="filtreStatut">
+          <option value="">Tous les codes</option>
+          <option value="actif">Codes à utiliser</option>
+          <option value="utilise">Codes utilisés</option>
+          <option value="expire">Codes expirés</option>
+        </select>
+        <button class="bouton" id="exportCsv">⬇ Exporter (Excel / Brevo)</button>
+      </div>
+      <p class="muted" id="compteInscrits"></p>
+      <div class="tableau-wrap"><table class="tableau" id="tableInscrits"></table></div>
+    </section>
+
+    <!-- Vérifier un code -->
+    <section class="vue" data-vue="code" hidden>
+      <div class="panneau panneau--centre">
+        <h2>Vérifier un code au comptoir</h2>
+        <p class="muted">Tapez le code montré par le client (par exemple MIL-VIN-7KQ2D).</p>
+        <form id="formCode" class="ligne-code">
+          <input id="champCode" placeholder="MIL-…" autocomplete="off" autocapitalize="characters">
+          <button class="bouton bouton--or" type="submit">Vérifier</button>
+        </form>
+        <div id="resultatCode"></div>
+      </div>
+    </section>
+
+    <!-- Demandes -->
+    <section class="vue" data-vue="demandes" hidden>
+      <div class="outils">
+        <select id="filtreDemandes">
+          <option value="ouvertes">À traiter</option>
+          <option value="traitee">Traitées</option>
+          <option value="archivee">Archivées</option>
+          <option value="">Toutes</option>
+        </select>
+      </div>
+      <div id="listeDemandes" class="liste-demandes"></div>
+    </section>
+
+    <!-- Modifier le site -->
+    <section class="vue" data-vue="site" hidden>
+      <div class="aide">
+        <b>Comment ça marche :</b> modifiez les textes et les photos ci-dessous, puis cliquez sur <b>« Enregistrer »</b>.
+        Les changements apparaissent sur le site en moins d'une minute.
+      </div>
+      <div id="editeur"></div>
+      <div class="barre-enregistrer" id="barreEnregistrer">
+        <span id="etatEnregistrement" class="muted">Aucune modification</span>
+        <a class="bouton" href="/" target="_blank" rel="noopener">Voir le site ↗</a>
+        <button class="bouton bouton--or" id="btnEnregistrer" disabled>Enregistrer</button>
+      </div>
+    </section>
+
+    <!-- Jeu -->
+    <section class="vue" data-vue="jeu" hidden>
+      <div class="panneau">
+        <h2>Réglages du jeu</h2>
+        <div id="reglagesJeu"></div>
+      </div>
+    </section>
+
+    <!-- Compte -->
+    <section class="vue" data-vue="compte" hidden>
+      <div class="grille-2">
+        <div class="panneau">
+          <h2>Changer mon mot de passe</h2>
+          <form id="formMdp" class="formulaire">
+            <label>Nouveau mot de passe (10 caractères minimum)<input type="password" id="nouveauMdp" minlength="10" autocomplete="new-password" required></label>
+            <label>Confirmer<input type="password" id="nouveauMdp2" minlength="10" autocomplete="new-password" required></label>
+            <button class="bouton bouton--or" type="submit">Changer le mot de passe</button>
+            <p class="message" id="mdpMessage" hidden></p>
+          </form>
+        </div>
+        <div class="panneau">
+          <h2>Session</h2>
+          <p class="muted" id="infoCompte"></p>
+          <button class="bouton" id="btnDeconnexion">Se déconnecter</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="vendor/supabase-2.45.4.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
