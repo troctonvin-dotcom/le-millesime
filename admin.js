@@ -92,7 +92,7 @@
   $("btnDeconnexion").addEventListener("click", async function () { await sb.auth.signOut(); location.hash = ""; location.reload(); });
 
   // ---------- Navigation ----------
-  var TITRES = { assistant: "Assistant", apercu: "Vue d'ensemble", inscrits: "Inscrits", code: "Vérifier un code", demandes: "Demandes de réservation", site: "Modifier le site", jeu: "Jeu de la roue", compte: "Mon compte" };
+  var TITRES = { clients: "Comptes clients", assistant: "Assistant", apercu: "Vue d'ensemble", inscrits: "Inscrits", code: "Vérifier un code", demandes: "Demandes de réservation", site: "Modifier le site", jeu: "Jeu de la roue", compte: "Mon compte" };
   function allerA(v) {
     if (!TITRES[v]) v = "apercu";
     document.querySelectorAll(".vue").forEach(function (s) { s.hidden = s.getAttribute("data-vue") !== v; });
@@ -111,13 +111,15 @@
       sb.from("inscrits").select("*").order("created_at", { ascending: false }).limit(10000),
       sb.from("demandes").select("*").order("created_at", { ascending: false }).limit(2000),
       sb.from("parametres").select("*").eq("id", 1).single(),
-      chargerContenu()
+      chargerContenu(),
+      sb.from("clients").select("*").order("created_at", { ascending: false }).limit(10000)
     ]);
+    etat.clients = (r[4] && r[4].data) || [];
     if (r[0].error || r[1].error) toast("Impossible de charger toutes les données. Rechargez la page.", true);
     etat.inscrits = r[0].data || [];
     etat.demandes = r[1].data || [];
     etat.params = r[2].data || null;
-    afficherApercu(); afficherInscrits(); afficherDemandes(); afficherJeu();
+    afficherApercu(); afficherInscrits(); afficherDemandes(); afficherJeu(); afficherClients();
     if (etat.contenu) { etat.brouillon = JSON.parse(JSON.stringify(etat.contenu)); construireEditeur(); }
   }
   async function chargerContenu() {
@@ -145,6 +147,7 @@
       { l: "Gains « 2 verres »", v: v.length, d: v.filter(function (i) { return i.utilise_le; }).length + " déjà servis", c: "stat--vin" },
       { l: "Gains « −10 % »", v: rr.length, d: rr.filter(function (i) { return i.utilise_le; }).length + " déjà utilisés", c: "" },
       { l: "Codes en attente", v: actifs, d: utilises + " utilisés sur " + gagnants.length + " gagnés", c: "stat--marine" },
+      { l: "Comptes clients", v: (etat.clients || []).length, d: (etat.clients || []).filter(function (c) { return c.newsletter; }).length + " inscrits à la newsletter", c: "stat--marine" },
       { l: "Demandes à traiter", v: nouvelles, d: D.length + " demandes au total", c: "stat--vert" }
     ].forEach(function (s) {
       stats.appendChild(el("div", { class: "stat " + s.c }, el("div", { class: "stat__label", text: s.l }), el("div", { class: "stat__valeur", text: String(s.v) }), el("div", { class: "stat__detail", text: s.d })));
@@ -622,6 +625,41 @@
     $("barreEnregistrer").classList.remove("modifie");
     $("etatEnregistrement").textContent = "Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " · visible sur le site d'ici 1 minute";
     toast("Enregistré ✓ Le site sera à jour d'ici 1 minute.");
+  });
+
+  // ---------- Comptes clients ----------
+  function clientsFiltres() {
+    var q = $("rechClients").value.trim().toLowerCase(), n = $("filtreNews").value;
+    return (etat.clients || []).filter(function (c) {
+      if (n === "oui" && !c.newsletter) return false;
+      return !q || [c.prenom, c.telephone, telAffiche(c.telephone)].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  function afficherClients() {
+    var L = clientsFiltres(), t = vider($("tableClients"));
+    $("compteClients").textContent = L.length + " compte" + (L.length > 1 ? "s" : "") + " · l'e-mail de chaque client est visible dans l'export";
+    t.appendChild(el("thead", {}, el("tr", {}, ["Créé le", "Prénom", "Téléphone", "Newsletter"].map(function (x) { return el("th", { text: x }); }))));
+    var tb = el("tbody");
+    if (!L.length) tb.appendChild(el("tr", {}, el("td", { colspan: "4", class: "vide", text: "Aucun compte client pour l'instant. Les clients créent leur compte depuis « Mon compte » sur le site." })));
+    L.slice(0, 500).forEach(function (c) {
+      tb.appendChild(el("tr", {}, el("td", { text: dateFr(c.created_at, true) }), el("td", {}, el("b", { text: c.prenom || "—" })),
+        el("td", {}, c.telephone ? el("a", { href: "tel:" + c.telephone, text: telAffiche(c.telephone) }) : "—"),
+        el("td", {}, el("span", { class: c.newsletter ? "badge badge--ok" : "badge badge--expire", text: c.newsletter ? "Oui" : "Non" }))));
+    });
+    t.appendChild(tb);
+  }
+  ["rechClients", "filtreNews"].forEach(function (id) { $(id).addEventListener("input", afficherClients); });
+  $("exportClients").addEventListener("click", async function () {
+    var r = await sb.rpc("export_clients");
+    if (r.error) return toast("Export impossible.", true);
+    var n = $("filtreNews").value, L = (r.data || []).filter(function (c) { return n !== "oui" || c.newsletter; });
+    function cel(v) { var s = String(v == null ? "" : v); if (/^[=@]/.test(s) || /^[+-][^\d]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; }
+    var lignes = [["Créé le", "Prénom", "E-mail", "Téléphone", "Newsletter"].map(cel).join(";")];
+    L.forEach(function (c) { lignes.push([dateFr(c.created_at, true), c.prenom, c.email, telAffiche(c.telephone), c.newsletter ? "Oui" : "Non"].map(cel).join(";")); });
+    var blob = new Blob(["\ufeff" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    var a = el("a", { href: URL.createObjectURL(blob), download: "comptes-clients-le-millesime-" + aujourdhui() + ".csv" });
+    document.body.appendChild(a); a.click(); a.remove();
+    toast(L.length + " compte" + (L.length > 1 ? "s" : "") + " exporté" + (L.length > 1 ? "s" : ""));
   });
 
   // ---------- Assistant (Claude) ----------

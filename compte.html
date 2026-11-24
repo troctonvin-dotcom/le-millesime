@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon compte — Le Millésime, cave &amp; bar à vin à Sens</title>
+<meta name="description" content="Connectez-vous à votre compte Le Millésime pour retrouver vos gains, vos demandes de réservation et vos préférences.">
+<meta name="robots" content="noindex, follow">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .compte { background: var(--creme); }
+  .compte__grille { display: grid; grid-template-columns: 1fr; gap: var(--sp-6); align-items: start; }
+  @media (min-width: 900px) { .compte__grille { grid-template-columns: 1fr 1fr; } }
+  .carte-compte { background: #FBF8F1; border-top: 4px solid var(--or); padding: var(--sp-6); box-shadow: 0 20px 40px -28px rgba(10,33,64,.35); }
+  .carte-compte h2 { font-size: var(--fs-h3); margin-bottom: var(--sp-4); }
+  .carte-compte .form { max-width: none; gap: var(--sp-4); }
+  .consent { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: .95rem; color: var(--marine); }
+  .consent input { width: 20px !important; height: 20px; margin-top: 3px; flex: 0 0 auto; accent-color: var(--or); }
+  .lien-discret { background: none; border: 0; padding: 0; color: var(--marine); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font: inherit; font-size: .9rem; justify-self: start; }
+  .msg { padding: .8rem 1rem; font-size: .95rem; margin: 0; }
+  .msg--ok { background: #EAF4EC; color: #2f6b3a; }
+  .msg--ko { background: #FDF0EE; color: #a13b2f; }
+  .espace__haut { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: center; justify-content: space-between; margin-bottom: var(--sp-6); }
+  .espace__haut h2 { font-size: var(--fs-h2); margin: 0; }
+  .liste-gains { display: grid; gap: var(--sp-3); }
+  .gain { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; align-items: center; padding: var(--sp-4); background: #fff; border-left: 4px solid var(--or); }
+  .gain--V { border-left-color: #7A2335; }
+  .gain b { font-family: var(--font-serif); font-size: 1.15rem; }
+  .gain .code { font-weight: 600; letter-spacing: .14em; border: 2px dashed var(--or); padding: .35rem .7rem; }
+  .etiquette-statut { font-size: .85rem; font-weight: 600; padding: .2rem .6rem; border-radius: 99px; background: #FFF4DC; color: #8A6116; }
+  .etiquette-statut--ok { background: #EAF4EC; color: #2f6b3a; }
+  .etiquette-statut--gris { background: #EEE; color: #666; }
+  .vide { color: var(--marine); opacity: .75; font-style: italic; }
+  .ligne-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+  .btn--contour { background: transparent; border: 1px solid var(--marine-dark); color: var(--marine-dark); }
+  .btn--danger { background: transparent; border: 1px solid #a13b2f; color: #a13b2f; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="site-header__inner">
+    <a href="index.html" class="brand">
+      <img src="assets/logo.png" alt="Le Millésime" width="112" height="75" class="brand__logo">
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="siteNav">
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="visually-hidden">Ouvrir le menu</span>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="index.html#histoire">Histoire</a></li>
+        <li><a href="index.html#propose">Ce qu'on propose</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="index.html#evenements">Événements</a></li>
+        <li><a href="index.html#infos-pratiques">Infos pratiques</a></li>
+      </ul>
+      <a href="compte.html" class="nav-compte" title="Mon compte" aria-current="page"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-compte__texte">Mon compte</span></a>
+      <a href="contact.html" class="btn btn--gold nav-cta">Réserver une table</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenu">
+  <section class="section contact-hero">
+    <div class="section__inner">
+      <p class="eyebrow-quiet">Le Millésime · Espace client</p>
+      <h1 class="title-left contact-hero__title">Mon compte</h1>
+      <p class="contact-hero__lead">Retrouvez vos gains de la roue, vos demandes de réservation et vos préférences.</p>
+    </div>
+  </section>
+
+  <section class="section compte">
+    <div class="section__inner">
+
+      <p class="msg" id="messageGlobal" hidden></p>
+
+      <!-- Non connecté -->
+      <div class="compte__grille" id="zoneAccueil" hidden>
+        <div class="carte-compte">
+          <h2>Se connecter</h2>
+          <form class="form" id="formConnexion" novalidate>
+            <div class="form__row"><label for="cxEmail">E-mail</label><input type="email" id="cxEmail" autocomplete="username" required></div>
+            <div class="form__row"><label for="cxMdp">Mot de passe</label><input type="password" id="cxMdp" autocomplete="current-password" required></div>
+            <button type="submit" class="btn btn--gold">Se connecter</button>
+            <button type="button" class="lien-discret" id="btnOubli">Mot de passe oublié ?</button>
+          </form>
+        </div>
+
+        <div class="carte-compte">
+          <h2>Créer mon compte</h2>
+          <form class="form" id="formInscription" novalidate>
+            <div class="form__row form__row--split">
+              <div><label for="inPrenom">Prénom</label><input type="text" id="inPrenom" autocomplete="given-name" required></div>
+              <div><label for="inTel">Téléphone</label><input type="tel" id="inTel" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required></div>
+            </div>
+            <div class="form__row"><label for="inEmail">E-mail</label><input type="email" id="inEmail" autocomplete="email" required></div>
+            <div class="form__row"><label for="inMdp">Mot de passe (8 caractères minimum)</label><input type="password" id="inMdp" autocomplete="new-password" minlength="8" required></div>
+            <label class="consent"><input type="checkbox" id="inMajeur" required> <span>J'ai 18 ans ou plus.</span></label>
+            <label class="consent"><input type="checkbox" id="inNews"> <span>Je souhaite recevoir la newsletter du Millésime (une par mois environ, désinscription à tout moment).</span></label>
+            <button type="submit" class="btn btn--gold">Créer mon compte</button>
+            <p class="petit" style="font-size:.85rem;opacity:.8;margin:0;">Vos données servent uniquement à votre compte et, si vous l'acceptez, à la newsletter du Millésime. Vous pouvez supprimer votre compte à tout moment.</p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Nouveau mot de passe (après un lien « mot de passe oublié ») -->
+      <div class="carte-compte" id="zoneNouveauMdp" hidden style="max-width:560px;">
+        <h2>Choisir un nouveau mot de passe</h2>
+        <form class="form" id="formNouveauMdp">
+          <div class="form__row"><label for="nmMdp">Nouveau mot de passe (8 caractères minimum)</label><input type="password" id="nmMdp" minlength="8" autocomplete="new-password" required></div>
+          <button type="submit" class="btn btn--gold">Enregistrer</button>
+        </form>
+      </div>
+
+      <!-- Connecté -->
+      <div id="zoneEspace" hidden>
+        <div class="espace__haut">
+          <h2 id="bonjour">Bonjour</h2>
+          <div class="ligne-actions">
+            <a href="admin" class="btn btn--contour" id="lienAdmin" hidden>Tableau de bord</a>
+            <button type="button" class="btn btn--contour" id="btnDeconnexion">Se déconnecter</button>
+          </div>
+        </div>
+
+        <div class="compte__grille">
+          <div class="carte-compte">
+            <h2>Mes gains</h2>
+            <div class="liste-gains" id="mesGains"></div>
+          </div>
+          <div class="carte-compte">
+            <h2>Mes demandes de réservation</h2>
+            <div class="liste-gains" id="mesDemandes"></div>
+            <a href="contact.html" class="btn btn--gold" style="margin-top:1.2rem;">Faire une demande</a>
+          </div>
+          <div class="carte-compte">
+            <h2>Mon profil</h2>
+            <form class="form" id="formProfil">
+              <div class="form__row form__row--split">
+                <div><label for="prPrenom">Prénom</label><input type="text" id="prPrenom" autocomplete="given-name"></div>
+                <div><label for="prTel">Téléphone</label><input type="tel" id="prTel" autocomplete="tel"></div>
+              </div>
+              <label class="consent"><input type="checkbox" id="prNews"> <span>Recevoir la newsletter du Millésime</span></label>
+              <button type="submit" class="btn btn--gold">Enregistrer</button>
+            </form>
+          </div>
+          <div class="carte-compte">
+            <h2>Sécurité</h2>
+            <form class="form" id="formMdp">
+              <div class="form__row"><label for="mdpNouveau">Nouveau mot de passe (8 caractères minimum)</label><input type="password" id="mdpNouveau" minlength="8" autocomplete="new-password" required></div>
+              <button type="submit" class="btn btn--gold">Changer le mot de passe</button>
+            </form>
+            <hr style="margin:1.5rem 0;border:0;border-top:1px solid rgba(10,33,64,.12);">
+            <button type="button" class="btn btn--danger" id="btnSupprimer">Supprimer mon compte</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <a href="index.html" class="brand brand--footer">
+      <img src="assets/logo.png" alt="Le Millésime" width="54" height="36" class="brand__logo">
+      <span class="brand__name">Le Millésime</span>
+    </a>
+    <nav aria-label="Liens du pied de page">
+      <ul class="footer-nav">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="contact.html">Réservation &amp; Contact</a></li>
+        <li><a href="roue.html">Tentez votre chance</a></li>
+      </ul>
+    </nav>
+    <a href="https://www.instagram.com/le_millesime_sens/" class="footer-instagram" target="_blank" rel="noopener">@le_millesime_sens</a>
+  </div>
+  <p class="site-footer__legal">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+</footer>
+
+<script src="script.js"></script>
+<script src="vendor/supabase-2.45.4.min.js"></script>
+<script src="compte.js"></script>
+</body>
+</html>

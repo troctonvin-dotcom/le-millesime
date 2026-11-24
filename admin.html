@@ -33,6 +33,7 @@
     <nav>
       <button class="menu__lien" data-vue="apercu"><span class="ico">◧</span>Vue d'ensemble</button>
       <button class="menu__lien" data-vue="inscrits"><span class="ico">☺</span>Inscrits</button>
+      <button class="menu__lien" data-vue="clients"><span class="ico">♙</span>Comptes clients</button>
       <button class="menu__lien" data-vue="code"><span class="ico">✓</span>Vérifier un code</button>
       <button class="menu__lien" data-vue="demandes"><span class="ico">✉</span>Demandes<span class="pastille" id="pastilleDemandes" hidden></span></button>
       <button class="menu__lien" data-vue="site"><span class="ico">✎</span>Modifier le site</button>
@@ -95,6 +96,17 @@
       </div>
       <p class="muted" id="compteInscrits"></p>
       <div class="tableau-wrap"><table class="tableau" id="tableInscrits"></table></div>
+    </section>
+
+    <!-- Comptes clients -->
+    <section class="vue" data-vue="clients" hidden>
+      <div class="outils">
+        <input type="search" id="rechClients" placeholder="Rechercher un prénom ou un téléphone…">
+        <select id="filtreNews"><option value="">Tous les comptes</option><option value="oui">Inscrits à la newsletter</option></select>
+        <button class="bouton" id="exportClients">⬇ Exporter (Excel / Brevo)</button>
+      </div>
+      <p class="muted" id="compteClients"></p>
+      <div class="tableau-wrap"><table class="tableau" id="tableClients"></table></div>
     </section>
 
     <!-- Vérifier un code -->
