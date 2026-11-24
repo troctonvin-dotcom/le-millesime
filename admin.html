@@ -37,6 +37,7 @@
       <button class="menu__lien" data-vue="demandes"><span class="ico">✉</span>Demandes<span class="pastille" id="pastilleDemandes" hidden></span></button>
       <button class="menu__lien" data-vue="site"><span class="ico">✎</span>Modifier le site</button>
       <button class="menu__lien" data-vue="jeu"><span class="ico">◎</span>Jeu de la roue</button>
+      <button class="menu__lien" data-vue="assistant"><span class="ico">✦</span>Assistant</button>
       <button class="menu__lien" data-vue="compte"><span class="ico">⚙</span>Mon compte</button>
     </nav>
     <a class="menu__site" href="/" target="_blank" rel="noopener">Voir le site ↗</a>
@@ -141,6 +142,19 @@
       <div class="panneau">
         <h2>Réglages du jeu</h2>
         <div id="reglagesJeu"></div>
+      </div>
+    </section>
+
+    <!-- Assistant -->
+    <section class="vue" data-vue="assistant" hidden>
+      <div class="chat">
+        <div class="chat__fil" id="chatFil" aria-live="polite"></div>
+        <div class="chat__suggestions" id="chatSuggestions"></div>
+        <form class="chat__saisie" id="chatForm">
+          <textarea id="chatTexte" rows="2" placeholder="Demandez ce que vous voulez : « Change les horaires du mardi : 15h–22h », « Ajoute une question sur les cartes cadeaux », « Combien d'inscrits cette semaine ? »…"></textarea>
+          <button class="bouton bouton--or" type="submit" id="chatEnvoyer">Envoyer</button>
+        </form>
+        <p class="muted chat__note">L'assistant propose des modifications : rien ne change sur le site tant que vous n'avez pas cliqué sur « Appliquer ».</p>
       </div>
     </section>
 

@@ -92,7 +92,7 @@
   $("btnDeconnexion").addEventListener("click", async function () { await sb.auth.signOut(); location.hash = ""; location.reload(); });
 
   // ---------- Navigation ----------
-  var TITRES = { apercu: "Vue d'ensemble", inscrits: "Inscrits", code: "Vérifier un code", demandes: "Demandes de réservation", site: "Modifier le site", jeu: "Jeu de la roue", compte: "Mon compte" };
+  var TITRES = { assistant: "Assistant", apercu: "Vue d'ensemble", inscrits: "Inscrits", code: "Vérifier un code", demandes: "Demandes de réservation", site: "Modifier le site", jeu: "Jeu de la roue", compte: "Mon compte" };
   function allerA(v) {
     if (!TITRES[v]) v = "apercu";
     document.querySelectorAll(".vue").forEach(function (s) { s.hidden = s.getAttribute("data-vue") !== v; });
@@ -623,6 +623,85 @@
     $("etatEnregistrement").textContent = "Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " · visible sur le site d'ici 1 minute";
     toast("Enregistré ✓ Le site sera à jour d'ici 1 minute.");
   });
+
+  // ---------- Assistant (Claude) ----------
+  var chat = { messages: [] };
+  var SUGGESTIONS = ["Combien d'inscrits cette semaine ?", "Ajoute un bandeau : soirée dégustation vendredi à 19h", "Change le téléphone affiché", "Ajoute une question sur les cartes cadeaux", "Résume les demandes à traiter"];
+  function bulle(role, texte, extra) {
+    var b = el("div", { class: "bulle " + (role === "user" ? "bulle--moi" : "bulle--ia") }, role === "user" ? null : el("span", { class: "auteur", text: "Assistant" }), texte, extra || null);
+    $("chatFil").appendChild(b); $("chatFil").scrollTop = $("chatFil").scrollHeight; return b;
+  }
+  function resumeTableau() {
+    var I = etat.inscrits, D = etat.demandes, il7j = Date.now() - 7 * 86400000;
+    var lignes = [
+      "Date du jour : " + new Date().toLocaleDateString("fr-FR"),
+      "Inscrits au total : " + I.length + " (dont " + I.filter(function (i) { return new Date(i.created_at).getTime() >= il7j; }).length + " ces 7 derniers jours)",
+      "Gains 2 verres : " + I.filter(function (i) { return i.lot === "V"; }).length + ", gains -10 % : " + I.filter(function (i) { return i.lot === "R"; }).length,
+      "Codes utilisés : " + I.filter(function (i) { return i.utilise_le; }).length + ", codes en attente : " + I.filter(function (i) { return statutCode(i).cle === "actif"; }).length,
+      "Jeu ouvert : " + (etat.params && etat.params.jeu_actif ? "oui" : "non") + ", fenêtre d'accueil : " + (etat.params && etat.params.popup_actif ? "oui" : "non"),
+      "Demandes à traiter : " + D.filter(function (d) { return d.statut === "nouvelle"; }).length + " sur " + D.length
+    ];
+    D.filter(function (d) { return d.statut === "nouvelle"; }).slice(0, 15).forEach(function (d) {
+      lignes.push("- Demande de " + d.nom + " le " + dateFr(d.created_at) + " : " + (d.objet || "") + (d.date_souhaitee ? ", pour le " + dateFr(d.date_souhaitee) : "") + (d.personnes ? ", " + d.personnes + " pers." : "") + (d.message ? " — " + String(d.message).slice(0, 200) : ""));
+    });
+    return lignes.join("\n");
+  }
+  function afficherPropositions(b, modifs) {
+    var zone = el("div", { class: "propositions" });
+    modifs.forEach(function (m) { zone.appendChild(el("div", { class: "proposition" }, m.description, el("small", { text: m.chemin }))); });
+    var appliquer = el("button", { type: "button", class: "bouton bouton--or bouton--petit", text: "Appliquer et publier" });
+    var ignorer = el("button", { type: "button", class: "bouton bouton--petit", text: "Ignorer" });
+    appliquer.addEventListener("click", async function () {
+      try { modifs.forEach(function (m) { set(etat.brouillon, m.chemin, JSON.parse(m.valeur_json)); }); }
+      catch (e) { return toast("Modification illisible, rien n'a été changé.", true); }
+      appliquer.disabled = ignorer.disabled = true; appliquer.textContent = "Publication…";
+      var r = await sb.from("contenu").upsert({ id: "site", data: etat.brouillon, updated_at: new Date().toISOString(), updated_by: etat.user.id });
+      if (r.error) { appliquer.disabled = ignorer.disabled = false; appliquer.textContent = "Appliquer et publier"; return toast("Erreur : modifications non enregistrées.", true); }
+      etat.contenu = JSON.parse(JSON.stringify(etat.brouillon)); etat.modifie = false;
+      $("barreEnregistrer").classList.remove("modifie"); $("etatEnregistrement").textContent = "Enregistré par l'assistant";
+      construireEditeur();
+      appliquer.textContent = "Publié ✓"; toast("Publié ✓ Visible sur le site d'ici 1 minute.");
+    });
+    ignorer.addEventListener("click", function () { zone.remove(); });
+    zone.appendChild(el("div", { class: "btns" }, appliquer, ignorer));
+    b.appendChild(zone);
+  }
+  async function envoyerChat(texte) {
+    texte = texte.trim(); if (!texte) return;
+    if (etat.modifie) return toast("Enregistrez d'abord vos modifications en cours dans « Modifier le site ».", true);
+    $("chatSuggestions").hidden = true;
+    chat.messages.push({ role: "user", texte: texte }); bulle("user", texte);
+    $("chatTexte").value = ""; $("chatEnvoyer").disabled = true;
+    var attente = bulle("assistant", "", el("span", { class: "points" }, el("i"), el("i"), el("i")));
+    try {
+      var s = (await sb.auth.getSession()).data.session;
+      var rep = await fetch(SUPABASE_URL + "/functions/v1/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_CLE, "Authorization": "Bearer " + (s ? s.access_token : "") },
+        body: JSON.stringify({ messages: chat.messages, contenu: etat.brouillon, resume: resumeTableau() })
+      });
+      var d = await rep.json().catch(function () { return {}; });
+      attente.remove();
+      if (!rep.ok || d.erreur) {
+        var msg = { cle_manquante: "L'assistant n'est pas encore activé : il manque la clé API Anthropic dans les réglages Supabase.", cle_invalide: "La clé API Anthropic n'est pas valide.", occupe: "L'assistant est très sollicité, réessayez dans une minute.", connexion: "Votre session a expiré : reconnectez-vous.", acces: "Ce compte n'a pas accès à l'assistant." }[d.erreur] || "L'assistant n'a pas pu répondre. Réessayez.";
+        chat.messages.pop(); bulle("assistant", msg).classList.add("bulle--erreur");
+      } else {
+        chat.messages.push({ role: "assistant", texte: d.reponse });
+        var b = bulle("assistant", d.reponse);
+        if (d.modifications && d.modifications.length) afficherPropositions(b, d.modifications);
+      }
+    } catch (e) {
+      attente.remove(); chat.messages.pop(); bulle("assistant", "Connexion impossible. Vérifiez internet et réessayez.").classList.add("bulle--erreur");
+    }
+    $("chatEnvoyer").disabled = false; $("chatTexte").focus();
+  }
+  (function initChat() {
+    bulle("assistant", "Bonjour ! Je peux modifier les textes, horaires, avis, questions fréquentes ou le bandeau d'annonce du site, et répondre à vos questions sur les inscrits et les demandes. Que voulez-vous faire ?");
+    var sug = $("chatSuggestions");
+    SUGGESTIONS.forEach(function (t) { sug.appendChild(el("button", { type: "button", text: t, onclick: function () { envoyerChat(t); } })); });
+    $("chatForm").addEventListener("submit", function (e) { e.preventDefault(); envoyerChat($("chatTexte").value); });
+    $("chatTexte").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerChat($("chatTexte").value); } });
+  })();
 
   demarrer();
 })();
